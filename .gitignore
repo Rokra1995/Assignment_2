@@ -1,0 +1,7 @@
+# Don't track content of these files
+
+/housing_data
+housing_data.csv
+
+
+/venv
