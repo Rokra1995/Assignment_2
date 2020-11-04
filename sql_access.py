@@ -40,5 +40,3 @@ conn.commit()
 # Close communication with the database
 cur.close()
 conn.close()
- 
- #Comment from Emmanuel ()test
