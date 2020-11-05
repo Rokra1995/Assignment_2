@@ -28,4 +28,6 @@ Development Workflow:
 6. check if evrything worked:
     git status
 
+TO actualize your branch with the master branch
+1. git pull --rebase origin main 
 
