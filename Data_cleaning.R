@@ -34,6 +34,7 @@ setwd(dirname(getSourceEditorContext()$path))
 #Data Cleaning####
 data <- read_csv("/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/housing_data.csv")
 
+data <- read_csv("/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/cbs_data.csv", sep=';')
 #overview
 summary(data)
 
@@ -46,5 +47,8 @@ summary(data)
 # select necessary columns
 data <- data %>% select(globalId, publicatieDatum, postcode, koopPrijs, volledigeOmschrijving, soortWoning, categorieObject, bouwjaar, indTuin, perceelOppervlakte, aantalKamers, aantalBadkamers, energielabelKlasse, oppervlakte, datum_ondertekening)
 summary(data)
+
+
+
 
 
