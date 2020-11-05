@@ -38,18 +38,6 @@ WHERE koopPrijs = 'NULL';"
 #cur.execute(change_to_null)
 
 
-#cur.execute("SELECT koopPrijs FROM housing_data WHERE koopPrijs IS NULL limit 50;")
-#cur.execute("ALTER TABLE housing_data ADD COLUMN dateDiff integer GENERATED ALWAYS AS (datum_ondertekening - publicationDate) STORED")
-cur.execute("Select array_length(regexp_split_to_array(volledigeOmschrijving, '\\s+'),1), volledigeOmschrijving from housing_data limit 1")
-#cur.execute("SELECT (datum_ondertekening - publicationDate) from housing_data limit 3;")
-#cur.execute("SELECT DATE_PART('day', '2012-01-01'::date) - DATE_PART('day', '2011-10-05'::date);")
-#cur.execute("SELECT * FROM housing_data limit 1;")
-#print(cur.fetchall())
-
-#print(type(cur.fetchall()))
-#cur.execute("SELECT datum_ondertekening, publicationDate, dateDiff FROM housing_data limit 3;")
-print(cur.fetchall())
-
 # Make the changes to the database persistent
 conn.commit()
 
