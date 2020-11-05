@@ -7,12 +7,17 @@ Initial steps:
     cd /home/pi/Assignment2    
 3. clone our development repository:
     git clone https://github.com/Rokra1995/Assignment_2.git
+4. go to directory
+    cd Assignment_2
 4. Create a new local branch for the development on your firstname:
     git checkout -b yourbranchname
+5. Tell git to cache your username and pw so you don't have to type it in everytime you push smth
+    git config --global credential.helper cache
 
 Development Workflow:
 1. check if you are on the right branch and if everything is on track
     git status
+    ***IF you are not on your branch then you have to troubleshoot to get to your branch. Never develop on the main branch. ***
 2. Work on the code and develop features
 3. If you added new files to the folder then make sure you add them before you upload them
     git add . 

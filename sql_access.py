@@ -30,9 +30,13 @@ cur = conn.cursor()
 # the correct conversion (no more SQL injections!)
 #cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (100, "abc'def"))
 
-# Query the database and obtain data as Python objects
-cur.execute("SELECT * FROM housing_data;")
-print(cur.fetchone())
+# data cleaning
+
+change_to_null = "UPDATE housing_data \
+SET koopPrijs = NULL \
+WHERE koopPrijs = 'NULL';"
+#cur.execute(change_to_null)
+
 
 # Make the changes to the database persistent
 conn.commit()
