@@ -32,11 +32,9 @@ cur = conn.cursor()
 
 # data cleaning
 
-change_to_null = "UPDATE housing_data \
-SET koopPrijs = NULL \
-WHERE koopPrijs = 'NULL';"
-#cur.execute(change_to_null)
-
+executing_script = "\copy funda_2018(globalId, publicatieDatum, postcode, koopPrijs, volledigeOmschrijving, soortWoning, categorieObject, bouwjaar, indTuin, perceelOppervlakte, kantoor_naam_MD5hash, aantalKamers, aantalBadkamers, energielabelKlasse, globalId1, oppervlakte, datum_ondertekening) FROM '/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/housing_data.csv' null 'NULL' CSV HEADER;"
+cur.execute(executing_script)
+#cur.fetchone()
 
 # Make the changes to the database persistent
 conn.commit()
