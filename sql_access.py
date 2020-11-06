@@ -21,20 +21,11 @@ conn = psycopg2.connect("dbname=Robinkratschmayr2 user=Robinkratschmayr2")
 # Open a cursor to perform database operations
 cur = conn.cursor()
 
-# Execute a command: this creates a new table
-#cur.execute("DROP TABLE housing_data;")
-#cur.execute("CREATE TABLE housing_data (globalId integer PRIMARY KEY, publicatieDatum text, postcode text, koopPrijs text, volledigeOmschrijving text, soortWoning text, categorieObject text, bouwjaar text, indTuin text, perceelOppervlakte text, kantoor_naam_MD5hash text, aantalKamers text, aantalBadkamers text, energielabelKlasse text, globalId1 integer, oppervlakte text, datum_ondertekening text);")
-#cur.execute("COPY housing_data(globalId, publicatieDatum, postcode, koopPrijs, volledigeOmschrijving, soortWoning, categorieObject, bouwjaar, indTuin, perceelOppervlakte, kantoor_naam_MD5hash, aantalKamers, aantalBadkamers, energielabelKlasse, globalId1, oppervlakte, datum_ondertekening) FROM '/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/housing_data.csv' CSV HEADER;")
-
-# Pass data to fill a query placeholders and let Psycopg perform
-# the correct conversion (no more SQL injections!)
-#cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (100, "abc'def"))
-
 # data cleaning
 
-executing_script = "\copy funda_2018(globalId, publicatieDatum, postcode, koopPrijs, volledigeOmschrijving, soortWoning, categorieObject, bouwjaar, indTuin, perceelOppervlakte, kantoor_naam_MD5hash, aantalKamers, aantalBadkamers, energielabelKlasse, globalId1, oppervlakte, datum_ondertekening) FROM '/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/housing_data.csv' null 'NULL' CSV HEADER;"
+executing_script = "SELECT * FROM funda_2018 limit 10;"
 cur.execute(executing_script)
-#cur.fetchone()
+print(cur.fetchall())
 
 # Make the changes to the database persistent
 conn.commit()

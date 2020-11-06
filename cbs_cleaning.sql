@@ -56,9 +56,13 @@ CREATE TABLE IF NOT EXISTS district_info AS
 CREATE TABLE IF NOT EXISTS neighborhood_info AS
   (SELECT * FROM cbs_info WHERE NeighborhoodsAndDistricts LIKE 'BU%');
 
+ALTER TABLE municipality_info RENAME COLUMN NeighborhoodsAndDistricts TO MunicipalityCode;
+ALTER TABLE district_info RENAME COLUMN NeighborhoodsAndDistricts TO DistrictCode;
+ALTER TABLE neighborhood_info RENAME COLUMN NeighborhoodsAndDistricts TO NeighborhoodCode;
+
 CREATE TABLE IF NOT EXISTS zipcodes AS (SELECT zipcode, MunicipalityCode, MunicipalityKey, DistrictCode, DistrictKey, NeighborhoodKey FROM postcodes NATURAL JOIN neighborhood);
 
-CREATE TABLE IF NOT EXISTS neighborhood_names AS (SELECT NeighborhoodKey, NeighborhoodName FROM neighborhood);
+CREATE TABLE IF NOT EXISTS neighborhood_names AS (SELECT DISTINCT NeighborhoodKey, NeighborhoodName FROM neighborhood);
 DROP TABLE neighborhood;
 
 ALTER TABLE district_names RENAME TO district_names_backup;
@@ -74,6 +78,9 @@ DROP TABLE municipality_names_backup;
 ALTER TABLE zipcodes DROP COLUMN MunicipalityKey;
 ALTER TABLE zipcodes DROP COLUMN DistrictKey;
 
+update municipality_info set municipalityCode = replace(municipalityCode, ' ','');
+update neighborhood_info set neighborhoodCode = replace(neighborhoodCode, ' ','');
+update district_info set districtCode = replace(districtCode, ' ','');
 
 
 --Foreignkey example
