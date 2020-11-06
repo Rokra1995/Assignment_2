@@ -40,5 +40,4 @@ ALTER TABLE funda_2018 ALTER COLUMN sellingDate TYPE date USING sellingDate::dat
 ALTER TABLE funda_2018 ADD COLUMN sellingTime integer GENERATED ALWAYS AS (sellingDate - publicationDate) STORED;
 
 -- add column with the length of the description
-ALTER TABLE funda_2018 ADD COLUMN descriptionLength integer GENERATED ALWAYS AS array_length(regexp_split_to_array(fullDescription, '\\s+'),1) STORED;
-
+ALTER TABLE funda_2018 ADD COLUMN descriptionLength integer GENERATED ALWAYS AS (array_length(regexp_split_to_array(fulldescription, E'\\s+'),1)) STORED;
