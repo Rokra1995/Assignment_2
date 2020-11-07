@@ -13,7 +13,11 @@ import mysql.connector
 engine = create_engine('postgresql://localhost/[Robinkratschmayr2]')
 
 #Connect to an existing database
-conn = psycopg2.connect("dbname=Robinkratschmayr2 user=Robinkratschmayr2")
+#conn = psycopg2.connect("dbname=Robinkratschmayr2 user=Robinkratschmayr2")
+
+#Connection on the RPI
+#change it to your credentials
+conn = psycopg2.connect("host=localhost user=pi password=raspberry dbname=test")
 
 # Open a cursor to perform database operations
 cur = conn.cursor()

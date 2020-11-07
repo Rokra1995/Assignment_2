@@ -9,9 +9,9 @@ Initial steps:
     git clone https://github.com/Rokra1995/Assignment_2.git
 4. go to directory
     cd Assignment_2
-4. Create a new local branch for the development on your firstname:
+5. Create a new local branch for the development on your firstname:
     git checkout -b yourbranchname
-5. Tell git to cache your username and pw so you don't have to type it in everytime you push smth
+6. Tell git to cache your username and pw so you don't have to type it in everytime you push smth
     git config --global credential.helper cache
 
 Development Workflow:
