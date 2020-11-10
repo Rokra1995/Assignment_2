@@ -34,9 +34,9 @@ setwd(dirname(getSourceEditorContext()$path))
 #Data Cleaning####
 data <- read_csv("/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/housing_data.csv")
 
-data <- read_csv("/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/cbs_data.csv", sep=';')
+#data <- read_csv("/Users/Robinkratschmayr2/Library/Mobile Documents/com~apple~CloudDocs/2. Ausbildung/Master/Quarter 1/Database Management and Digital Tools/Assignment2/Input_data/cbs_data.csv", sep=';')
 #overview
-summary(data)
+glimpse(data)
 
 # change misclassified strings to numeric
 data <- transform(data, koopPrijs = as.numeric(koopPrijs), 
