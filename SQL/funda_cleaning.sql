@@ -41,3 +41,10 @@ ALTER TABLE funda_2018 ADD COLUMN sellingTime integer GENERATED ALWAYS AS (selli
 
 -- add column with the length of the description
 ALTER TABLE funda_2018 ADD COLUMN descriptionLength integer GENERATED ALWAYS AS (array_length(regexp_split_to_array(fulldescription, E'\\s+'),1)) STORED;
+
+-- add column with ts_vector lexemes
+ALTER TABLE funda_2018
+ADD COLUMN IF NOT EXISTS description_vector ts_vector;
+UPDATE funda_2018
+SET description_vector = to_tsvector(fullDescription);
+

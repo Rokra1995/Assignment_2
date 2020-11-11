@@ -1,0 +1,4 @@
+host=localhost
+user=Robinkratschmayr2
+port=5432
+dbname=Robinkratschmayr2

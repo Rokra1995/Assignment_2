@@ -1,8 +1,11 @@
 # Don't track content of these files
 
-/housing_data
+#Files
 housing_data.csv
+db_login.text
 
+#Folders
+/housing_data
 /Input_data
 /Input_Data
 /venv
