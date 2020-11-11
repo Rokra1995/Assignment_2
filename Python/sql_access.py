@@ -38,7 +38,7 @@ def funda_analysis():
     # Select the first 100 rows in the funda table and fetch them to a list object
     executing_script = "SELECT * FROM funda_2018 limit 100;"
     funda_2018 = sqlio.read_sql_query(executing_script, conn)
-
+    print(funda_2018)
 
     #miniumum requirements:
 
@@ -66,5 +66,5 @@ def funda_analysis():
 
     return print('Analysis succesfully done')
 
-
+funda_analysis()
 
