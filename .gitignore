@@ -9,3 +9,6 @@ db_login.txt
 /Input_data
 /Input_Data
 /venv
+
+#Data_types
+*.csv
