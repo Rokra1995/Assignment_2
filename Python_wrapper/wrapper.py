@@ -53,7 +53,7 @@ def initialize_database():
     funda_cleaned['sellingTime'] = pd.to_datetime(funda_cleaned['sellingDate']) - pd.to_datetime(funda_cleaned['publicationDate'])
     #funda_cleaned['sellingTime'] = funda_cleaned.sellingDate - funda_cleaned.publicationDate
     funda_cleaned['sellingTime'] = funda_cleaned['sellingTime'].apply(lambda x: int(x.days))
-    funda_db = funda_cleaned.reset_index().rename(columns={'index':'ID'})
+    funda_db = funda_cleaned
 
     cbs_cleaned = cbs_data.fillna(0).rename(columns={'WijkenEnBuurten':'NeighborhoodsAndDistricts','Gemeentenaam_1':'NameOfMunicipality','Mannen_6':'NumberOfMen',\
     'Vrouwen_7':'NumberOfWomen','k_0Tot15Jaar_8':'AgeFrom0to15years','k_15Tot25Jaar_9':'AgeFrom15to25years',\
@@ -81,17 +81,19 @@ def initialize_database():
     'PercentageUninhabited','OwnerOccupiedHouses','RentalHouses','ConstructionYearBefore2000','ConstructionYearAfter2000',\
     'AverageIncomePerCitizen','MostCommonPostalCode','CoveragePercentage']]
 
-    municipality_names_db = brt_2020[['GM_NAAM','GM_2020']].drop_duplicates().rename(columns={'GM_NAAM':'MunicipalityName','GM_2020':'MunicipalityCode'}).replace("'","")
-    district_names_db = brt_2020[['WK_NAAM','WK_2020']].drop_duplicates().rename(columns={'WK_NAAM':'DistrictName','WK_2020':'DistrictCode'})
-    buurt_names_db = brt_2020[['buurtnaam2020','buurtcode2020']].drop_duplicates().rename(columns={'buurtnaam2020':'NeighborhoodName','buurtcode2020':'NeighborhoodCode'})
-    postcodes_db = postcodes.merge(brt_2020, left_on='Buurt2020',right_on='buurtcode2020', how='left')[['PC6','Buurt2020','GM_2020','WK_2020']].rename(columns={'PC6':'zipcodes','Buurt2020':'NeighborhoodCode','GM_2020':'MunicipalityCode','WK_2020':'DistrictCode'}).astype({'NeighborhoodCode':'object'})
+    municipality_names_db = brt_2020[['GM_NAAM','GM_2020']].drop_duplicates().rename(columns={'GM_NAAM':'MunicipalityName','GM_2020':'MunicipalityCode'}).replace("'","").drop_duplicates(subset='MunicipalityCode', keep='first')
+    district_names_db = brt_2020[['WK_NAAM','WK_2020']].drop_duplicates().rename(columns={'WK_NAAM':'DistrictName','WK_2020':'DistrictCode'}).drop_duplicates(subset='DistrictCode', keep='first')
+    buurt_names_db = brt_2020[['buurtnaam2020','buurtcode2020']].drop_duplicates().rename(columns={'buurtnaam2020':'NeighborhoodName','buurtcode2020':'NeighborhoodCode'}).drop_duplicates(subset='NeighborhoodCode', keep='first').astype({'NeighborhoodCode':'object'})
+    postcodes_db = postcodes.merge(brt_2020, left_on='Buurt2020',right_on='buurtcode2020', how='left')[['PC6','Buurt2020','GM_2020','WK_2020']].rename(columns={'PC6':'zipcode','Buurt2020':'NeighborhoodCode','GM_2020':'MunicipalityCode','WK_2020':'DistrictCode'}).astype({'NeighborhoodCode':'object'}).drop_duplicates(subset='zipcode', keep="first")
 
+    print(postcodes_db.dtypes)
+    print(buurt_names_db.dtypes)
     #specifiy tables to be created with their name and create them with the correct datatypes for postgres.
     db_tables = {'funda':funda_db,'demographic_info':demographic_info_db,'housing_info':housing_info_db,'municipality_names':municipality_names_db,'district_names':district_names_db,'Neighborhood_names':buurt_names_db,'zipcodes':postcodes_db}
     postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
-
+    
     for k,v in db_tables.items():
-        command = "DROP TABLE IF EXISTS {};".format(k)
+        command = "DROP TABLE IF EXISTS {} CASCADE;".format(k)
         print(command)
         cur.execute(command)
         conn.commit()
@@ -114,11 +116,35 @@ def initialize_database():
             conn.commit()
         print("Table {} succesfully filled with data".format(str(k)))
 
+    #specifiy the Keys:
+    key_commands = [
+        "ALTER TABLE funda ADD COLUMN ID SERIAL PRIMARY KEY;",
+        "ALTER TABLE zipcodes ADD PRIMARY KEY (zipcode)",
+        "ALTER TABLE funda ADD FOREIGN KEY (zipcode) REFERENCES zipcodes(zipcode);",
+        "ALTER TABLE municipality_names ADD PRIMARY KEY (MunicipalityCode);",
+        "ALTER TABLE district_names ADD PRIMARY KEY (DistrictCode);",
+        "ALTER TABLE neighborhood_names ADD PRIMARY KEY (NeighborhoodCode);",
+        "ALTER TABLE housing_info ADD COLUMN ID SERIAL PRIMARY KEY;",
+        "ALTER TABLE demographic_info ADD COLUMN ID SERIAL PRIMARY KEY;",
+        "ALTER TABLE zipcodes ADD FOREIGN KEY (MunicipalityCode) REFERENCES municipality_names(MunicipalityCode);",
+        "ALTER TABLE zipcodes ADD FOREIGN KEY (DistrictCode) REFERENCES district_names(DistrictCode);",
+        "ALTER TABLE zipcodes ADD FOREIGN KEY (NeighborhoodCode) REFERENCES neighborhood_names(NeighborhoodCode);",
+    ]
+
+    for SQL in key_commands:
+        try:
+            print(SQL)
+            cur.execute(SQL,conn)
+            conn.commit()
+        except Exception as E:
+            print(E)
+            conn.rollback()
+    
     #End connection
     cur.close()
     conn.close()
 
-    return print('Database successfully  initialized')
+    return print('Database successfully initialized')
 
 def add_funda_data(csv_path, year):
     #start connection with database
@@ -268,7 +294,6 @@ def funda_analysis():
     conn.close()
 
     return print('Analysis succesfully done')
-#funda_analysis()
 
 def full_text_search(text):
 
