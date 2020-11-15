@@ -6,7 +6,9 @@ import mysql.connector
 import os
 import sys
 import datetime
+import matplotlib.pyplot as plt
 
+# a function to identify the Rootpath necessary to load the csv in the initialize database function
 def splitPath(s):
     f = os.path.basename(s)
     p = s[:-(len(f))-1]
@@ -22,29 +24,15 @@ def initialize_database():
     current_path = os.path.dirname(os.path.abspath(__file__))
     f,root = splitPath(current_path)
 
-    sql_files = ['create_cbs_tables.sql', 'create_funda_table.sql','cbs_cleaning.sql', 'funda_cleaning.sql']
-    path_prefix = 'SQL/'
-
-    for sql_script in sql_files:
-        print(os.path.join(root, path_prefix, sql_script))
-
     #Read csv input files:
     funda = pd.read_csv(os.path.join(root, 'Input_data/housing_data.csv'))
-    #brt_2020 = pd.read_csv(os.path.join(root, 'Input_data/brt2020.csv'), sep=";")
     cbs_data = pd.read_csv(os.path.join(root, 'Input_data/cbs_data.csv'), sep=";")
-    #gem_2020 = pd.read_csv(os.path.join(root, 'Input_data/gem2020.csv'), sep=";")
-    #postcodes = pd.read_csv(os.path.join(root, 'Input_data/pc6-gwb2020.csv'), sep=";")
-    #wijk2020 = pd.read_csv(os.path.join(root, 'Input_data/wijk2020.csv'), sep=";")
+    brt_2020 = pd.read_csv(os.path.join(root, 'Input_data/brt2020.csv'), sep=";")
+    postcodes = pd.read_csv(os.path.join(root, 'Input_data/pc6-gwb2020.csv'), sep=";")
 
-    #print(brt_2020)
-    #print(cbs_data)
-    #print(gem_2020)
-    #print(postcodes)
-    #print(wijk2020)
 
     #remove NoneTypes, rename columns to english and drop unnecessary columns
     #also cleaning the category objects to python list types for later usage and calculating the sellingtime
-    '''
     funda_cleaned = funda.fillna(0).rename(columns={'publicatieDatum':'publicationDate','postcode':'zipcode','koopPrijs':'sellingPrice',\
     'volledigeOmschrijving':'fullDescription','soortWoning':'houseType','categorieObject':'categoryObject','bouwjaar':'yearOfBuilding', \
     'indTuin':'garden','perceelOppervlakte':'parcelSurface','aantalKamers':'numberRooms','aantalBadkamers':'numberBathrooms','energielabelKlasse':'energylabelClass',\
@@ -60,11 +48,12 @@ def initialize_database():
 
     funda_cleaned['houseType'] = funda_cleaned['houseType'].apply(lambda x: category_to_list(x))
     funda_cleaned['categoryObject'] = funda_cleaned['categoryObject'].apply(lambda x: str(x).replace('<','').replace('{','').replace('>','').replace('}',''))
-    funda_cleaned['sellingDate'] = pd.to_datetime(funda_cleaned['sellingDate'])
-    funda_cleaned['publicationDate'] = pd.to_datetime(funda_cleaned['publicationDate'])
-    funda_cleaned['sellingTime'] = funda_cleaned.sellingDate - funda_cleaned.publicationDate
+    #funda_cleaned['sellingDate'] = pd.to_datetime(funda_cleaned['sellingDate'])
+    #funda_cleaned['publicationDate'] = pd.to_datetime(funda_cleaned['publicationDate'])
+    funda_cleaned['sellingTime'] = pd.to_datetime(funda_cleaned['sellingDate']) - pd.to_datetime(funda_cleaned['publicationDate'])
+    #funda_cleaned['sellingTime'] = funda_cleaned.sellingDate - funda_cleaned.publicationDate
     funda_cleaned['sellingTime'] = funda_cleaned['sellingTime'].apply(lambda x: int(x.days))
-    '''
+    funda_db = funda_cleaned.reset_index().rename(columns={'index':'ID'})
 
     cbs_cleaned = cbs_data.fillna(0).rename(columns={'WijkenEnBuurten':'NeighborhoodsAndDistricts','Gemeentenaam_1':'NameOfMunicipality','Mannen_6':'NumberOfMen',\
     'Vrouwen_7':'NumberOfWomen','k_0Tot15Jaar_8':'AgeFrom0to15years','k_15Tot25Jaar_9':'AgeFrom15to25years',\
@@ -73,12 +62,10 @@ def initialize_database():
     'PercentageOnbewoond_39' : 'PercentageUninhabited','Koopwoningen_40' : 'OwnerOccupiedHouses','HuurwoningenTotaal_41' : 'RentalHouses',\
     'BouwjaarVoor2000_45' : 'ConstructionYearBefore2000','BouwjaarVanaf2000_46' : 'ConstructionYearAfter2000',\
     'GemiddeldInkomenPerInwoner_66' : 'AverageIncomePerCitizen','MeestVoorkomendePostcode_103' : 'MostCommonPostalCode','Dekkingspercentage_104' : 'CoveragePercentage'}).drop(['Codering_3','NameOfMunicipality'], axis=1).replace(' ','').replace('       .',0)
-    cbs_cleaned = cbs_cleaned.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-    print(cbs_cleaned.columns)
-    type_dict = {'PopulationDensity': 'float64','PercentageInhabited':'float64','PercentageUninhabited': 'float64','OwnerOccupiedHouses': 'float64','RentalHouses': 'float64','ConstructionYearBefore2000 ': 'float64','ConstructionYearAfter2000': 'float64','AverageIncomePerCitizen': 'float64','MostCommonPostalCode': 'int64','CoveragePercentage ': 'int64'}
+    cbs_cleaned = cbs_cleaned.apply(lambda x: x.str.strip() if x.dtype == "object" else x).replace('.',0).fillna(0)
+    type_dict = {'PopulationDensity': 'float64','PercentageInhabited':'float64','PercentageUninhabited': 'float64','OwnerOccupiedHouses': 'float64','RentalHouses': 'float64','ConstructionYearBefore2000': 'float64','ConstructionYearAfter2000': 'float64','AverageIncomePerCitizen': 'float64','CoveragePercentage': 'float64'}
 
     for k,v in type_dict.items():
-        print(k)
         cbs_cleaned = cbs_cleaned.astype({k: v})#,'PercentageInhabited':'int64','PercentageUninhabited': 'int64','OwnerOccupiedHouses': 'int64','RentalHouses': 'int64','ConstructionYearBefore2000 ': 'int64','ConstructionYearAfter2000': 'int64','AverageIncomePerCitizen': 'float64','MostCommonPostalCode': 'int64','CoveragePercentage ': 'int64'}, errors='ignore')
     
     #'PercentageInhabited': 'int64','PercentageUninhabited': 'int64','OwnerOccupiedHouses': 'int64','RentalHouses': 'int64','ConstructionYearBefore2000 ': 'int64','ConstructionYearAfter2000': 'int64','AverageIncomePerCitizen': 'float64','MostCommonPostalCode': 'int64','CoveragePercentage ': 'int64'
@@ -87,7 +74,6 @@ def initialize_database():
     cbs_cleaned['DistrictCode'] = cbs_cleaned['NeighborhoodsAndDistricts'].apply(lambda x: str(x) if str(x).startswith('WK') else '-')
     cbs_cleaned['NeighborhoodCode'] = cbs_cleaned['NeighborhoodsAndDistricts'].apply(lambda x: str(x) if str(x).startswith('BU') else '-')
     
-    print(cbs_cleaned.dtypes)
 
     demographic_info_db = cbs_cleaned[['MunicipalityCode','DistrictCode','NeighborhoodCode','NumberOfMen','NumberOfWomen','AgeFrom0to15years','AgeFrom15to25years',\
     'AgeFrom25to45years','AgeFrom45to65years','AgeFrom65AndOlder','PopulationDensity']]
@@ -95,39 +81,44 @@ def initialize_database():
     'PercentageUninhabited','OwnerOccupiedHouses','RentalHouses','ConstructionYearBefore2000','ConstructionYearAfter2000',\
     'AverageIncomePerCitizen','MostCommonPostalCode','CoveragePercentage']]
 
-    print(demographic_info_db)
-    print(housing_info_db)
-    print(housing_info_db['CoveragePercentage'].drop_duplicates().to_list())
-    
+    municipality_names_db = brt_2020[['GM_NAAM','GM_2020']].drop_duplicates().rename(columns={'GM_NAAM':'MunicipalityName','GM_2020':'MunicipalityCode'}).replace("'","")
+    district_names_db = brt_2020[['WK_NAAM','WK_2020']].drop_duplicates().rename(columns={'WK_NAAM':'DistrictName','WK_2020':'DistrictCode'})
+    buurt_names_db = brt_2020[['buurtnaam2020','buurtcode2020']].drop_duplicates().rename(columns={'buurtnaam2020':'NeighborhoodName','buurtcode2020':'NeighborhoodCode'})
+    postcodes_db = postcodes.merge(brt_2020, left_on='Buurt2020',right_on='buurtcode2020', how='left')[['PC6','Buurt2020','GM_2020','WK_2020']].rename(columns={'PC6':'zipcodes','Buurt2020':'NeighborhoodCode','GM_2020':'MunicipalityCode','WK_2020':'DistrictCode'}).astype({'NeighborhoodCode':'object'})
 
-    '''
-    #open the sql file and execute each command seperatly after extracting the lines that are comments
-    with open(os.path.join(root, path_prefix, 'cbs_cleaning.sql'), 'r') as sql_file:
-        commands = sql_file.read()
-    for sql in commands.split(';'):
-        executing_command = str(sql.replace('\n',''))+';'
-        if executing_command.startswith('--') == True:
-            print('comment')
-        else:
-            try:
-                cur.execute(executing_command, conn)
-                conn.commit()
-            except Exception as e:
-                print(e)
-                conn.rollback()
-        #conn.commit()
-    '''
+    #specifiy tables to be created with their name and create them with the correct datatypes for postgres.
+    db_tables = {'funda':funda_db,'demographic_info':demographic_info_db,'housing_info':housing_info_db,'municipality_names':municipality_names_db,'district_names':district_names_db,'Neighborhood_names':buurt_names_db,'zipcodes':postcodes_db}
+    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
+
+    for k,v in db_tables.items():
+        command = "DROP TABLE IF EXISTS {};".format(k)
+        print(command)
+        cur.execute(command)
+        conn.commit()
+        cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in v.dtypes.items()])
+        command = "CREATE TABLE IF NOT EXISTS {} ({});".format(k, cols)
+        cur.execute(command)
+        print(command)
+        conn.commit()
     
-    #Make changes to db persistent
-    #conn.commit()
+    #fill tables one by one with info:
+    for k,v in db_tables.items():
+        cols = ",".join([str(i) for i in v.columns.tolist()])
+        for idx,row in v.iterrows():
+            row = list(row)
+            for idx, element in enumerate(row):
+                cleaned = element if type(element) != str else element.replace("'","")
+                row[idx] = cleaned
+            sql = "INSERT INTO {} ({}) VALUES {}".format(str(k),cols,tuple(row))
+            cur.execute(sql)
+            conn.commit()
+        print("Table {} succesfully filled with data".format(str(k)))
 
     #End connection
     cur.close()
     conn.close()
 
-    return print('Database successfully loaded and initialized')
-#initialize_database()
-#print(cwd)
+    return print('Database successfully  initialized')
 
 def add_funda_data(csv_path, year):
     #start connection with database
@@ -174,7 +165,7 @@ def funda_analysis():
 
     # 1. Average  asking  price  per  month  for  each  of  the municipalities in the Netherlands
     #select needed columns from database and store them in a pandas dataframe
-    executing_script = "SELECT sellingPrice, publicationDate, MunicipalityCode, MunicipalityName FROM funda_2018 NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names;"
+    executing_script = "SELECT sellingPrice, publicationDate, MunicipalityCode, MunicipalityName FROM funda_2018 NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names limit 100;"
     avg_asking_price = sqlio.read_sql_query(executing_script, conn)
 
     #create column month and year and create columns that will be used to group by
@@ -184,12 +175,16 @@ def funda_analysis():
     
     #group by selected columns. calcualte mean and safe as pandas Dataframe
     avg_asking_price_mean = avg_asking_price.groupby(by=groups).mean().reset_index()
+    ax = avg_asking_price_mean[avg_asking_price_mean.municipalityname=='Amsterdam'].plot()
+
+    plt.show()
+
     print("avg_asking_price_mean.head(25)")
     print(avg_asking_price_mean.head(25))
 
     #2. Average asking price per bevolkingsdichtheid group or category (you might  have  to  discretize  this  variable)  for  each  gemeente  in  the  Netherlands
     #select needed columns from database and store them in a pandas dataframe
-    executing_script = "SELECT DISTINCT sellingprice, districtCode, populationDensity, municipalityCode, municipalityname, zipcode FROM funda_2018 NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN district_info NATURAL LEFT JOIN municipality_names;"
+    executing_script = "SELECT DISTINCT sellingprice, districtCode, populationDensity, municipalityCode, municipalityname, zipcode FROM funda_2018 NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN district_info NATURAL LEFT JOIN municipality_names limit 1000;"
     avg_asking_price_popdens = sqlio.read_sql_query(executing_script, conn)
 
     #define function to discretize the variable populationDensity
