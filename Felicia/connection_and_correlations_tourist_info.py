@@ -74,7 +74,12 @@ def tourist_info_analysis ():
     
     #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
     print(tourist_info_sellingtime_and_price.corr(method ='pearson',min_periods=3)) 
-    #Conclusions: 1) correlation number_of_national_monuments+sellingprice = 0.271252 (slightly positivie) 2) correlation number_of_national_monuments+sellingtime = -0.155473 (slightly negative)
+    
+    '''
+    Conclusions: 
+    1) correlation number_of_national_monuments+sellingprice = 0.271252 (slightly positivie) 
+    2) correlation number_of_national_monuments+sellingtime = -0.155473 (slightly negative) 
+    '''
     
     #Make changes to db persistent
     conn.commit()
