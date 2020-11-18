@@ -182,31 +182,6 @@ def add_funda_data():
     conn.close()
     return print('Funda Data succesfully added')
 
-
-def correlation_housing_data_sellingprice_sellingtime():
-    #start connection with database
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-    
-    #Create dataframe to select columns of housing_data
-    housinginfo_sellingpricetime_table = "SELECT sellingPrice, fullDescription, houseType, categoryObject, yearOfBuilding, garden, parcelSurface, numberRooms, numberBathrooms, energylabelClass, surface, sellingtime FROM funda;"
-    housinginfo_sellingpricetime = sqlio.read_sql_query(housinginfo_sellingpricetime_table, conn)
-    
-    #Look for correlations between columns housing_data and sellingprice and sellingtime
-    print(housinginfo_sellingpricetime.corr(method ='pearson')) 
-    
-    '''' 
-    Conclusions with regard to sellingprice: 1)garden+sellingprice=-0,258484 2)parcelSurface+sellingprice=0.076516 3)numberrooms+sellingprice=0.100043 
-    4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
-    
-    Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
-    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849'''
-    
-    return print('Analysis succesfully done')
-<<<<<<< HEAD
-
 def test():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -297,6 +272,12 @@ def query_3():
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
+    #Select needed columns from database and store them in a pandas dataframe
+    sellingprice_per_municipality__per_citizen_ordered_table = "SELECT sellingPrice, MunicipalityName, MunicipalityCode, averageincomepercitizen FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN (SELECT MunicipalityCode, averageincomepercitizen from housing_info) AS housing_info;"
+    sellingprice_per_municipality__per_citizen = sqlio.read_sql_query(sellingprice_per_municipality__per_citizen_ordered_table, conn)
+    
+    #Select the avg asking price per municipality ranked by avg income 
+    print(sellingprice_per_municipality__per_citizen.groupby(['municipalityname']).mean().sort_values('averageincomepercitizen', ascending=False)) 
 
     #Make changes to db persistent
     conn.commit()
@@ -363,6 +344,21 @@ def query_5():
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
+    monthly_median_per_municipality_table = "SELECT sellingPrice, publicationDate, MunicipalityName FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names"
+    monthly_median_per_municipality = sqlio.read_sql_query(monthly_median_per_municipality_table, conn)
+    
+    #Group by municipality and month
+    #Set publicationdate to datetime_format
+    monthly_median_per_municipality['publicationdate'] = pd.to_datetime(monthly_median_per_municipality['publicationdate'])
+    
+    #Calculate difference between the prices
+    #Monthly median per municipality
+    #print(monthly_median_per_municipality.set_index("publicationdate").groupby(['municipalityname', pd.Grouper(freq='M')]).median()) 
+    #Difference between monthly median per municipality
+    #print(monthly_median_per_municipality.set_index("publicationdate").groupby(['municipalityname', pd.Grouper(freq='M')]).median().diff()) 
+    
+    #Calculate absolute difference between the prices
+    print(monthly_median_per_municipality.set_index("publicationdate").groupby(['municipalityname', pd.Grouper(freq='M')]).median().diff().abs())
 
     #Make changes to db persistent
     conn.commit()
@@ -372,6 +368,7 @@ def query_5():
     conn.close()
 
     return print('Done')
+query_5()
 
 #Query 6
 def query_6():
@@ -407,7 +404,7 @@ def query_7():
 
     return print('Done')
 
-#query_8
+#Query_8
 def query_8():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -462,7 +459,7 @@ def write_own_sql_query():
     conn.close()
 
 
-    return print('Output printet')
+    return print('Output printed')
 
 def create_aggregated_municipality_info_table():
     with open ('db_login.txt', 'r') as myfile:
@@ -535,7 +532,129 @@ def create_aggregated_municipality_info_table():
 
     return print('Done')
 
+
+    #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    #Create dataframe to select columns of housing_data
+    housinginfo_sellingpricetime_table = "SELECT sellingPrice, fullDescription, houseType, categoryObject, yearOfBuilding, garden, parcelSurface, numberRooms, numberBathrooms, energylabelClass, surface, sellingtime FROM funda;"
+    housinginfo_sellingpricetime = sqlio.read_sql_query(housinginfo_sellingpricetime_table, conn)
+    
+    #Look for correlations between columns housing_data and sellingprice and sellingtime
+    print(housinginfo_sellingpricetime.corr(method ='pearson')) 
+    
+    '''' 
+    Conclusions with regard to sellingprice: 1)garden+sellingprice=-0,258484 2)parcelSurface+sellingprice=0.076516 3)numberrooms+sellingprice=0.100043 
+    4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
+    
+    Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
+    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849'''
+    
+    return print('Done')
+
+def correlation_housing_data_sellingprice_sellingtime():
+    #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    #Create dataframe to select columns of housing_data
+    housinginfo_sellingpricetime_table = "SELECT sellingPrice, fullDescription, houseType, categoryObject, yearOfBuilding, garden, parcelSurface, numberRooms, numberBathrooms, energylabelClass, surface, sellingtime FROM funda;"
+    housinginfo_sellingpricetime = sqlio.read_sql_query(housinginfo_sellingpricetime_table, conn)
+    
+    #Look for correlations between columns housing_data and sellingprice and sellingtime
+    print(housinginfo_sellingpricetime.corr(method ='pearson')) 
+    
+    '''' 
+    Conclusions with regard to sellingprice: 1)garden+sellingprice=-0,258484 2)parcelSurface+sellingprice=0.076516 3)numberrooms+sellingprice=0.100043 
+    4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
+    
+    Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
+    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849
+    '''
+    
+    return print('Analysis succesfully done')
+
+def add_tourist_info_to_database():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+
+    tourist_info = pd.read_csv(os.path.join(root, 'Input_data/municipality code and National monuments 2018.csv', sep=';') 
+
+    #Cleaning of the data - rename columns
+    tourist_info = tourist_info.rename(columns={'SoortRijksmonument': 'Type_of_national_monument', 'RegioS': 'Municipalitycode', 'Rijksmonumenten_1': 'Number_of_national_monuments'})
+
+    #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
+    db_tables = {'tourist_info':tourist_info}
+    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
+    
+    for k,v in db_tables.items():
+        command = "DROP TABLE IF EXISTS {} CASCADE;".format(k)
+        print(command)
+        cur.execute(command)
+        conn.commit()
+        cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in v.dtypes.items()])
+        command = "CREATE TABLE IF NOT EXISTS {} ({});".format(k, cols)
+        cur.execute(command)
+        print(command)
+        conn.commit()
+    
+    #Fill tables one by one with info:
+    for k,v in db_tables.items():
+        cols = ",".join([str(i) for i in v.columns.tolist()])
+        for idx,row in v.iterrows():
+            row = list(row)
+            for idx, element in enumerate(row):
+                cleaned = element if type(element) != str else element.replace("'","")
+                row[idx] = cleaned
+            sql = "INSERT INTO {} ({}) VALUES {}".format(str(k),cols,tuple(row))
+            cur.execute(sql)
+            conn.commit()
+        print("Table {} succesfully filled with data".format(str(k)))
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Done')
+
+def tourist_info_analysis ():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    #Select municipality name, sellingprice, sellingtime and number of national monuments
+    tourist_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityName, sellingtime, number_of_national_monuments FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN tourist_info;"
+    tourist_info_sellingtime_and_price = sqlio.read_sql_query(tourist_info_sellingtime_and_price_table, conn)
+    #print(tourist_info_sellingtime_and_price.groupby(['municipalityname']).head(10))
+    
+    #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
+    print(tourist_info_sellingtime_and_price.corr(method ='pearson',min_periods=3)) 
+    
+    '''
+    Conclusions: 
+    1) correlation number_of_national_monuments+sellingprice = 0.271252 (slightly positivie) 
+    2) correlation number_of_national_monuments+sellingtime = -0.155473 (slightly negative) 
+    '''
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Done')
+    
 if __name__ == '__main__':
     globals()[sys.argv[1]]()
-
-
