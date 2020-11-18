@@ -1,5 +1,5 @@
-#Correlations sellingprice/time and housing info - Felicia
-#This needs to be added in the wrapper.py file!
+# Correlations sellingprice/time and housing info - Felicia
+# This needs to be added in the wrapper.py file!
 
 import pandas.io.sql as sqlio
 import pandas as pd
@@ -25,7 +25,8 @@ def correlation_housing_data_sellingprice_sellingtime():
     4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
     
     Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
-    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849'''
+    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849
+    '''
     
     return print('Analysis succesfully done')
 correlation_housing_data_sellingprice_sellingtime()

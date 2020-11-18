@@ -61,12 +61,6 @@ def tourist_info_analysis ():
     conn = psycopg2.connect(data)
     cur = conn.cursor()
     
-    sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, MunicipalityName, sellingtime FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names limit 100;"
-    sellingtime_and_price = sqlio.read_sql_query(sellingtime_and_price_table, conn)
-
-    #Select municipality name, sellingprice and sellingtime 
-    #print(sellingtime_and_price.groupby(['municipalityname']).reset_index())
-    
     #Select municipality name, sellingprice, sellingtime and number of national monuments
     tourist_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityName, sellingtime, number_of_national_monuments FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN tourist_info;"
     tourist_info_sellingtime_and_price = sqlio.read_sql_query(tourist_info_sellingtime_and_price_table, conn)

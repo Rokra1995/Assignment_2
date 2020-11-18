@@ -40,4 +40,3 @@ def monthly_median_per_municipality_calculation():
     conn.close()
     return print('Monthly median sellingprice per municipality succesfully calculated')
 monthly_median_per_municipality_calculation()
-
