@@ -14,6 +14,9 @@ ALTER TABLE funda_2018 RENAME COLUMN energielabelKlasse TO energylabelClass;
 ALTER TABLE funda_2018 RENAME COLUMN oppervlakte TO surface;
 ALTER TABLE funda_2018 RENAME COLUMN datum_ondertekening TO sellingDate;
 
+{'publicatieDatum':'publicationDate','postcode':'zipcode','koopPrijs':'sellingPrice','volledigeOmschrijving':'fullDescription','soortWoning':'houseType','categorieObject':'categoryObject','bouwjaar':'yearOfBuilding', 
+'indTuin':'garden','perceelOppervlakte':'parcelSurface','aantalKamers':'numberRooms','aantalBadkamers':'numberBathrooms','energielabelKlasse':'energylabelClass','oppervlakte':'surface','datum_ondertekening':'sellingDate'}
+
 -- remove columns 
 ALTER TABLE funda_2018 DROP COLUMN globalId1;
 -- If Error, check if globalId1 is correctly named, it could be globalId_1

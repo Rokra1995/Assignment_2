@@ -4,9 +4,10 @@ import pandas as pd
 import psycopg2
 import mysql.connector
 from spacy.lang.nl.stop_words import STOP_WORDS
+import sys
 
 
-def fundaNlpAnalysisFunc (year):
+def fundaNlpAnalysisFunc():
     #create connection to the databae
     #change the credentials in the db_login file before running for the first time
     with open ('db_login.txt', 'r') as myfile:
@@ -15,13 +16,15 @@ def fundaNlpAnalysisFunc (year):
     cur = conn.cursor()
 
     # Select the first 100 rows in the funda table and fetch them to a list object
-    executing_script = "SELECT globalId, fullDescription FROM funda_"+str(year)+" limit 500;"
+    executing_script = "SELECT ID, fullDescription FROM funda;"
     funda = sqlio.read_sql_query(executing_script, conn)
 
     nlp = spacy.load("nl")
-    funda_analysis = pd.DataFrame(columns=['globalId','descriptionLength', 'NOUN', 'ADJ', 'VERB', 'ADV','REL_NOUN','REL_ADJ','REL_VERB','REL_ADV','EMAILS', 'URLS', 'NUMBERS','CURRENCY', 'AVG_SENTIMENT', 'lexeme_1','lexeme_2','lexeme_3','lexeme_4','lexeme_5','lexeme_6','lexeme_7','lexeme_8','lexeme_9','lexeme_10','lexeme_dict',])
+    funda_analysis = pd.DataFrame(columns=['ID','descriptionLength', 'NOUN', 'ADJ', 'VERB', 'ADV','REL_NOUN','REL_ADJ','REL_VERB','REL_ADV','EMAILS', 'URLS', 'NUMBERS','CURRENCY', 'AVG_SENTIMENT', 'lexeme_1','lexeme_2','lexeme_3','lexeme_4','lexeme_5','lexeme_6','lexeme_7','lexeme_8','lexeme_9','lexeme_10','lexeme_dict',])
 
     for idx, entry in funda.iterrows():
+        print(idx)
+        funda_analysis = pd.DataFrame(columns=['ID','descriptionLength', 'NOUN', 'ADJ', 'VERB', 'ADV','REL_NOUN','REL_ADJ','REL_VERB','REL_ADV','EMAILS', 'URLS', 'NUMBERS','CURRENCY', 'AVG_SENTIMENT', 'lexeme_1','lexeme_2','lexeme_3','lexeme_4','lexeme_5','lexeme_6','lexeme_7','lexeme_8','lexeme_9','lexeme_10'])
         document = nlp(entry['fulldescription'])
 
         #calculate the different parameters
@@ -57,7 +60,7 @@ def fundaNlpAnalysisFunc (year):
             if word.pos_=='ADV':
                 ADVS.append(word)
 
-        REL_NOUN = len(NOUNS)/description_length
+        REL_NOUN = len(NOUNS)/description_length 
         REL_ADJ = len(ADJS)/description_length
         REL_VERB = len(VERBS)/description_length
         REL_ADV = len(ADVS)/description_length
@@ -67,8 +70,6 @@ def fundaNlpAnalysisFunc (year):
 
         #safe lexem in dict with counts to store later in table 
         lexeme = DF.groupby(['lexeme']).size().reset_index(name='counts').sort_values('counts', ascending=False)
-        print(lexeme)
-        print(lexeme.shape[0])
         lexeme_1 = lexeme['lexeme'].iloc[0] if lexeme.shape[0] != 0 else 'NaN'
         lexeme_2 = lexeme['lexeme'].iloc[1] if lexeme.shape[0] > 1 else 'NaN'
         lexeme_3 = lexeme['lexeme'].iloc[2] if lexeme.shape[0] > 2 else 'NaN'
@@ -80,27 +81,46 @@ def fundaNlpAnalysisFunc (year):
         lexeme_9 = lexeme['lexeme'].iloc[8] if lexeme.shape[0] > 8 else 'NaN'
         lexeme_10 = lexeme['lexeme'].iloc[9] if lexeme.shape[0] > 9 else 'NaN'
 
+        try:
+            avg_sent = sum(sentiment)/len(sentiment)
+        except Exception as e:
+            print(e)
+            avg_sent = 0
+
         #save lexeme info in string to store in database
         lexeme_dict = str(lexeme.to_dict('records'))
-        row_dict = {'globalId':entry['globalid'] ,'descriptionLength':description_length, 'NOUN':len(NOUNS), 'ADJ':len(ADJS), 'VERB':len(VERBS), 'ADV':len(ADVS),'REL_NOUN':REL_NOUN,'REL_ADJ':REL_ADJ,'REL_VERB':REL_VERB,'REL_ADV':REL_ADV,'EMAILS': len(emails), 'URLS':len(urls), 'NUMBERS':len(num),'CURRENCY':len(currency), 'AVG_SENTIMENT': sum(sentiment)/len(sentiment), 'lexeme_1':lexeme_1,'lexeme_2':lexeme_2,'lexeme_3':lexeme_3,'lexeme_4':lexeme_4,'lexeme_5':lexeme_5,'lexeme_6':lexeme_6,'lexeme_7':lexeme_7,'lexeme_8':lexeme_8,'lexeme_9':lexeme_9,'lexeme_10':lexeme_10,'lexeme_dict':lexeme_dict}
+        #row = [entry['id'],description_length,len(NOUNS),len(ADJS),len(VERBS),len(ADVS),REL_NOUN,REL_ADJ,REL_VERB,REL_ADV,len(emails), len(urls),len(num),len(currency),avg_sent,lexeme_1,lexeme_2,lexeme_3,lexeme_4,lexeme_5,lexeme_6,lexeme_7,lexeme_8,lexeme_9,lexeme_10,str(lexeme_dict)]
+        cols = ",".join([str(i) for i in funda_analysis.columns.tolist()])
+        row_dict = {'ID':entry['id'] ,'descriptionLength':description_length, 'NOUN':len(NOUNS), 'ADJ':len(ADJS), 'VERB':len(VERBS), 'ADV':len(ADVS),'REL_NOUN':REL_NOUN,'REL_ADJ':REL_ADJ,'REL_VERB':REL_VERB,'REL_ADV':REL_ADV,'EMAILS': len(emails), 'URLS':len(urls), 'NUMBERS':len(num),'CURRENCY':len(currency), 'AVG_SENTIMENT': avg_sent, 'lexeme_1':lexeme_1,'lexeme_2':lexeme_2,'lexeme_3':lexeme_3,'lexeme_4':lexeme_4,'lexeme_5':lexeme_5,'lexeme_6':lexeme_6,'lexeme_7':lexeme_7,'lexeme_8':lexeme_8,'lexeme_9':lexeme_9,'lexeme_10':lexeme_10}
         funda_analysis = funda_analysis.append(row_dict, ignore_index=True)
 
-    executing_script = "DROP TABLE IF EXISTS funda_NLP_analysis_"+str(year)+";"
-    cur.execute(executing_script)
-    executing_script = "CREATE TABLE IF NOT EXISTS funda_NLP_analysis_"+str(year)+" (globalId integer PRIMARY KEY, descriptionLength integer, NOUN integer, ADJ integer, VERB integer, ADV integer, REL_NOUN numeric,REL_ADJ numeric,REL_VERB numeric,REL_ADV numeric, emails integer, urls integer, numbers integer, currency integer, avg_sentiment numeric, lexeme_1 text, lexeme_2 text, lexeme_3 text, lexeme_4 text, lexeme_5 text, lexeme_6 text, lexeme_7 text, lexeme_8 text, lexeme_9 text, lexeme_10 text, lexeme_dict text);"
-    cur.execute(executing_script)
-    conn.commit()
+        for i,row in funda_analysis.iterrows():
+            try:          
+                sql = "INSERT INTO funda_NLP_analysis ({}) VALUES {}".format(cols,tuple(row))
+                cur.execute(sql)
+                conn.commit()
+            except Exception as e:
+                print(e)
+                conn.rollback()
+        #row_dict = {'ID':entry['id'] ,'descriptionLength':description_length, 'NOUN':len(NOUNS), 'ADJ':len(ADJS), 'VERB':len(VERBS), 'ADV':len(ADVS),'REL_NOUN':REL_NOUN,'REL_ADJ':REL_ADJ,'REL_VERB':REL_VERB,'REL_ADV':REL_ADV,'EMAILS': len(emails), 'URLS':len(urls), 'NUMBERS':len(num),'CURRENCY':len(currency), 'AVG_SENTIMENT': avg_sent, 'lexeme_1':lexeme_1,'lexeme_2':lexeme_2,'lexeme_3':lexeme_3,'lexeme_4':lexeme_4,'lexeme_5':lexeme_5,'lexeme_6':lexeme_6,'lexeme_7':lexeme_7,'lexeme_8':lexeme_8,'lexeme_9':lexeme_9,'lexeme_10':lexeme_10,'lexeme_dict':lexeme_dict}
+        #funda_analysis = funda_analysis.append(row_dict, ignore_index=True)
+
+    #executing_script = "DROP TABLE IF EXISTS funda_NLP_analysis;"
+    #cur.execute(executing_script)
+    # executing_script = "CREATE TABLE IF NOT EXISTS funda_NLP_analysis (ID integer PRIMARY KEY, descriptionLength integer, NOUN integer, ADJ integer, VERB integer, ADV integer, REL_NOUN numeric,REL_ADJ numeric,REL_VERB numeric,REL_ADV numeric, emails integer, urls integer, numbers integer, currency integer, avg_sentiment numeric, lexeme_1 text, lexeme_2 text, lexeme_3 text, lexeme_4 text, lexeme_5 text, lexeme_6 text, lexeme_7 text, lexeme_8 text, lexeme_9 text, lexeme_10 text, lexeme_dict text);"
+    #cur.execute(executing_script)
+    #conn.commit()
 
     #INSERT ONE BY ONE
     # creating column list for insertion
-    cols = ",".join([str(i) for i in funda_analysis.columns.tolist()])
-
+    #cols = ",".join([str(i) for i in funda_analysis.columns.tolist()])
+    '''
     # Insert DataFrame recrds one by one.
     for i,row in funda_analysis.iterrows():
-        sql = "INSERT INTO funda_analysis_"+str(year)+" (" +cols + ") VALUES (" + "%s,"*(len(row)-1) + "%s)"
+        sql = "INSERT INTO funda_NLP_analysis (" +cols + ") VALUES (" + "%s,"*(len(row)-1) + "%s)"
         cur.execute(sql, tuple(row))
         conn.commit()
-
+    '''
     # Make the changes to the database persistent
     conn.commit()
 
@@ -109,4 +129,5 @@ def fundaNlpAnalysisFunc (year):
     conn.close()
     return print('The Natural language processing has been done on the fulldescription and stored in a new table in the database')
 
-fundaNlpAnalysisFunc(2018)
+if __name__ == '__main__':
+    globals()[sys.argv[1]]()
