@@ -10,14 +10,14 @@ import matplotlib.pyplot as plt
 import re
 
 ############################################ DATABASE CREATION FUNCTIONS #############################################
-# a function to identify the Rootpath necessary to load the csv in the initialize database function
+# A function to identify the Rootpath necessary to load the csv in the initialize database function
 # © Robin Kratschmayr
 def splitPath(s):
     f = os.path.basename(s)
     p = s[:-(len(f))-1]
     return f, p
 
-# a function that cleans the funda category items and changes them as string
+# A function that cleans the funda category items and changes them as string
 # © Robin Kratschmayr
 def category_to_list(item):
     item_list = item.split(' ')
@@ -27,7 +27,7 @@ def category_to_list(item):
         cleaned_item_list.append(cleaned_item)
     return str(cleaned_item_list)
 
-# A function that takes a dataframe and a name of a table from the DB into which the Datframe entrys should be inserted to.
+# A function that takes a dataframe and a name of a table from the DB into which the Datframe entrys should be inserted to
 # © Robin Kratschmayr
 def add_DataFrame_to_DB(name, DF):
     #start connection with database
@@ -55,10 +55,10 @@ def add_DataFrame_to_DB(name, DF):
 
     return print("Table {} successfully filled with data".format(name))
 
-# A function that deletes a DB Table if it already exists and creates it new.
+# A function that deletes a DB Table if it already exists and creates it new
 # © Robin Kratschmayr
 def drop_and_create_table(name, DF):
-     #start connection with database
+    #start connection with database
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
     conn = psycopg2.connect(data)
@@ -82,7 +82,7 @@ def drop_and_create_table(name, DF):
 
     return print('Table dropped and created')
 
-# A function that adds the cbs tourist data to the database
+# A function that cleans and adds the cbs tourist data to the database
 # © Felicia Betten
 def add_tourist_info_to_database():
     #Start connection with database
@@ -110,7 +110,7 @@ def add_tourist_info_to_database():
     conn.close()
     return print('Done')
 
-# # A Function that cleans python function to add tourist data
+# A function that cleans and adds the labour data to the database
 # © Emmanuel Owusu Annim
 def add_labour_market_info_to_database():
     #Start connection with database
@@ -138,7 +138,7 @@ def add_labour_market_info_to_database():
     conn.close()
     return print('labour_market_info succesfully added')
 
-#A Function that cleans the data and create all necesarry Tables and specifies the Keys
+# A function that cleans and adds the crime data to the database
 # © Baris Orman
 def add_crime_info_to_database():
     #Start connection with database
@@ -169,7 +169,7 @@ def add_crime_info_to_database():
     conn.close()
     return print('Crime info succesfully added')
 
-# A Function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
+# A function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
 # © Robin Kratschmayr
 def initialize_database():
     #start connection with database
@@ -274,7 +274,7 @@ def initialize_database():
 
 #########################################THE ASSIGNMENT MINIMUM REQUIREMENTS START HERE#######################################
 
-#This function adds more data to the funda table.
+# A function that adds more data to the funda table
 # © Robin Kratschmayr
 def add_funda_data():
     csv_path = input("Enter the path to the funda csv file you want to add:")
@@ -311,7 +311,7 @@ def add_funda_data():
 
 
 ############################# THE FOLLOWING SECTION HOLDS THE REQUIRED QUERYS ############################
-#Query 1
+# Query 1
 # © Felicia Betten, Baris Orman, Emmanuel Owusu Annim, Robin Kratschmayr
 def query_1():
     with open ('db_login.txt', 'r') as myfile:
@@ -346,7 +346,7 @@ def query_1():
 
     return print('Done')
 
-#Query 2
+# Query 2
 # © Robin Kratschmayr
 def query_2():
     with open ('db_login.txt', 'r') as myfile:
@@ -378,7 +378,7 @@ def query_2():
 
     return print('Done')
 
-#Query 3
+# Query 3
 # © Felicia Betten
 def query_3():
     with open ('db_login.txt', 'r') as myfile:
@@ -402,7 +402,7 @@ def query_3():
 
     return print('Done')
 
-#Query 4
+# Query 4
 # © Robin Kratschmayr
 def query_4():
     with open ('db_login.txt', 'r') as myfile:
@@ -452,7 +452,7 @@ def query_4():
 
     return print('Done')
 
-#Query 5
+# Query 5
 # © Felicia Betten
 def query_5():
     with open ('db_login.txt', 'r') as myfile:
@@ -485,7 +485,7 @@ def query_5():
 
     return print('Done')
 
-#Query 6
+# Query 6
 # © Baris Orman
 def query_6():
     with open ('db_login.txt', 'r') as myfile:
@@ -525,7 +525,7 @@ def query_6():
 
     return print('Done')
 
-#Query 7
+# Query 7
 # © Emmanuel Owusu Annim
 def query_7():
     with open ('db_login.txt', 'r') as myfile:
@@ -627,7 +627,7 @@ def create_aggregated_municipality_info_table():
     return print('Done')
 
 ############################################ CORRELATION Analysis #############################################
-#Function that checks for correlations inside the funda Data
+# A function that checks for correlations inside the Funda Data
 # © Felicia Betten
 def correlation_funda_data_sellingprice_sellingtime():
     #start connection with database
@@ -652,7 +652,7 @@ def correlation_funda_data_sellingprice_sellingtime():
     
     return print('Analysis succesfully done')
 
-# A Function that checks for correlations with the NLP Analysis results
+# A function that checks for correlations with the NLP Analysis results
 # © Robin Kratschmayr
 def correlation_analysis_nlp():
     with open ('db_login.txt', 'r') as myfile:
@@ -674,7 +674,7 @@ def correlation_analysis_nlp():
     conn.close()
     return print('Done')
 
-# A Function that checks for correlations with the Labour Market Info
+# A function that checks for correlations with the Labour Market Info
 # © Emmanuel Owusu Annim
 def correlation_labour_market():
     #Start connection with database
@@ -711,7 +711,7 @@ def correlation_labour_market():
     conn.close()
     return print('Labour Market Info analysis succesfully done')
 
-# This functions checks the correlation between Number of registered crimes and sellingtime?sellingprice
+# A function that checks for correlations with the Crime Data
 # © Baris Orman
 def correlation_crime_info():
     #Start connection with database
@@ -735,7 +735,7 @@ def correlation_crime_info():
     conn.close()
     return print('Crime info analysis succesfully done')
     
-# A Function that checks for correlations sellingprice and demographic info
+# A function that checks for correlations with the Demographic Info
 # © Emmanuel Owusu Annim   
 def correlation_demographicinfo_sellingprice_sellingtime():
     #start connection with database
@@ -763,7 +763,7 @@ def correlation_demographicinfo_sellingprice_sellingtime():
     '''
     return print('Analysis succesfully done')
 
-# Calculates correlations between sellingprice/time and the housing info
+# A function that checks for correlations with the Housing Info
 # © Robin Kratschmayr
 def correlation_housing_info_sellingprice_sellingtime():
     #start connection with database
@@ -781,7 +781,7 @@ def correlation_housing_info_sellingprice_sellingtime():
     
     return print('Analysis succesfully done')
 
-# A Function that checks for correlations for sellingprice and Time and the tourist info
+# A function that checks for correlations with the Tourist Data
 # © Felicia Betten
 def correlation_tourist_info_analysis():
     #Start connection with database
@@ -813,7 +813,7 @@ def correlation_tourist_info_analysis():
     return print('Done')
 
 ####################################### ADDITIONAL COOL FUNCTIONS FOR OUR APP ##########################################
-#A function that lets the user write an own sql query and prints the output
+# A function that lets the user write an own sql query and prints the output
 # © Robin Kratschmayr
 def write_own_sql_query():
     with open ('db_login.txt', 'r') as myfile:
@@ -833,7 +833,7 @@ def write_own_sql_query():
     conn.close()
     return print('Output printed')
 
-# A Function that lets the user search for words inside the fullDescription
+# A function that lets the user search for words inside the fullDescription
 # © Felicia Betten
 def text_search():
     #Start connection with database
@@ -869,6 +869,6 @@ def text_search():
     conn.close()
     return print('Done')
 
-#This is to directly access inidividual functions from the Terminal
+# This is to directly access inidividual functions from the Terminal
 if __name__ == '__main__':
     globals()[sys.argv[1]]()
