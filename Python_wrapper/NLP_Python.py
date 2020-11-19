@@ -102,25 +102,7 @@ def fundaNlpAnalysisFunc():
             except Exception as e:
                 print(e)
                 conn.rollback()
-        #row_dict = {'ID':entry['id'] ,'descriptionLength':description_length, 'NOUN':len(NOUNS), 'ADJ':len(ADJS), 'VERB':len(VERBS), 'ADV':len(ADVS),'REL_NOUN':REL_NOUN,'REL_ADJ':REL_ADJ,'REL_VERB':REL_VERB,'REL_ADV':REL_ADV,'EMAILS': len(emails), 'URLS':len(urls), 'NUMBERS':len(num),'CURRENCY':len(currency), 'AVG_SENTIMENT': avg_sent, 'lexeme_1':lexeme_1,'lexeme_2':lexeme_2,'lexeme_3':lexeme_3,'lexeme_4':lexeme_4,'lexeme_5':lexeme_5,'lexeme_6':lexeme_6,'lexeme_7':lexeme_7,'lexeme_8':lexeme_8,'lexeme_9':lexeme_9,'lexeme_10':lexeme_10,'lexeme_dict':lexeme_dict}
-        #funda_analysis = funda_analysis.append(row_dict, ignore_index=True)
 
-    #executing_script = "DROP TABLE IF EXISTS funda_NLP_analysis;"
-    #cur.execute(executing_script)
-    # executing_script = "CREATE TABLE IF NOT EXISTS funda_NLP_analysis (ID integer PRIMARY KEY, descriptionLength integer, NOUN integer, ADJ integer, VERB integer, ADV integer, REL_NOUN numeric,REL_ADJ numeric,REL_VERB numeric,REL_ADV numeric, emails integer, urls integer, numbers integer, currency integer, avg_sentiment numeric, lexeme_1 text, lexeme_2 text, lexeme_3 text, lexeme_4 text, lexeme_5 text, lexeme_6 text, lexeme_7 text, lexeme_8 text, lexeme_9 text, lexeme_10 text, lexeme_dict text);"
-    #cur.execute(executing_script)
-    #conn.commit()
-
-    #INSERT ONE BY ONE
-    # creating column list for insertion
-    #cols = ",".join([str(i) for i in funda_analysis.columns.tolist()])
-    '''
-    # Insert DataFrame recrds one by one.
-    for i,row in funda_analysis.iterrows():
-        sql = "INSERT INTO funda_NLP_analysis (" +cols + ") VALUES (" + "%s,"*(len(row)-1) + "%s)"
-        cur.execute(sql, tuple(row))
-        conn.commit()
-    '''
     # Make the changes to the database persistent
     conn.commit()
 

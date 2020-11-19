@@ -1,6 +1,13 @@
-from wrapper import query_1, query_2, query_3, query_4, query_5, query_6, query_7, query_8, initialize_database, add_funda_data, write_own_sql_query
+from wrapper import query_1, query_2, query_3, query_4, query_5, query_6, query_7, \
+initialize_database, add_funda_data, write_own_sql_query, add_tourist_info_to_database, \
+correlation_housing_data_sellingprice_sellingtime, correlation_analysis_nlp, \
+correlation_tourist_info_analysis, text_search
 from NLP_Python import fundaNlpAnalysisFunc
-print('WELCOME TO YOUR FUNDA ANALYSIS APLLICATION')
+
+# This is the script to interact with all the functions we created
+# © Robin Kratschmayr
+
+print('WELCOME TO YOUR FUNDA ANALYSIS APPLICATION')
 print('What do you want to do?')
 
 userinput = 'started'
@@ -57,13 +64,30 @@ while str(userinput)!='stop':
     elif userinput == '4':
         fundaNlpAnalysisFunc()
     elif userinput == '5':
-        print('5')
+        print('Which correletaion do you want to see?')
+        print('1. Correlations within the Funda data')
+        print('2. Correlations between sellingtime/price and the tourist_data')
+        print('3. Correlations between sellingtime/price and the crime_data')
+        print('4. Correlations between sellingtime/price and the labour_data')
+        print('5. Correlations between sellingtime/price and the NLP analysis')
+        other_userinput = input('Type the number here: ')
+        if other_userinput == '1':
+            correlation_housing_data_sellingprice_sellingtime()
+        elif other_userinput == '2':
+            correlation_tourist_info_analysis()
+        elif other_userinput == '3':
+            query_3()
+        elif other_userinput == '4':
+            query_4()
+        elif other_userinput == '5':
+            correlation_analysis_nlp()
+        input('Type anything to go back to main menu: ')
     elif userinput == '6':
         print('6')
     elif userinput == '7':
         write_own_sql_query()
     elif userinput == '8':
-        print('8')
+        text_search()
     elif userinput == 'stop':
         print('Stopped')
     else:

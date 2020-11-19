@@ -8,12 +8,16 @@ import sys
 import datetime
 import matplotlib.pyplot as plt
 
+############################################ DATABASE CREATION FUNCTIONS #############################################
 # a function to identify the Rootpath necessary to load the csv in the initialize database function
+# © Robin Kratschmayr
 def splitPath(s):
     f = os.path.basename(s)
     p = s[:-(len(f))-1]
     return f, p
 
+# a function that cleans the funda category items and changes them as string
+# © Robin Kratschmayr
 def category_to_list(item):
     item_list = item.split(' ')
     cleaned_item_list = []
@@ -22,6 +26,93 @@ def category_to_list(item):
         cleaned_item_list.append(cleaned_item)
     return str(cleaned_item_list)
 
+# A function that takes a dataframe and a name of a table from the DB into which the Datframe entrys should be inserted to.
+# © Robin Kratschmayr
+def add_DataFrame_to_DB(name, DF):
+    #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    #get columns of dataframe
+    cols = ",".join([str(i) for i in DF.columns.tolist()])
+
+    #add each dataframe row one by one
+    for idx,row in DF.iterrows():
+        row = list(row)
+        for idx, element in enumerate(row):
+            cleaned = element if type(element) != str else element.replace("'","")
+            row[idx] = cleaned
+        sql = "INSERT INTO {} ({}) VALUES {}".format(name,cols,tuple(row))
+        cur.execute(sql)
+        conn.commit()
+    
+    #End connection
+    cur.close()
+    conn.close()
+
+    return print("Table {} successfully filled with data".format(name))
+
+# A functiion that deletes a DB Table if it already exists and creates it new.
+# © Robin Kratschmayr
+def drop_and_create_table(name, DF):
+     #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+
+    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
+    
+    command = "DROP TABLE IF EXISTS {} CASCADE;".format(name)
+    print(command)
+    cur.execute(command)
+    conn.commit()
+    cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in DF.dtypes.items()])
+    command = "CREATE TABLE IF NOT EXISTS {} ({});".format(name, cols)
+    cur.execute(command)
+    print(command)
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+
+    return print('Table dropped and created')
+
+# A function that adds the cbs tourist dta to the database
+# © Felicia Betten
+def add_tourist_info_to_database():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    f,root = splitPath(current_path)
+
+    tourist_info = pd.read_csv(os.path.join(root,'Input_data/municipality code and National monuments 2018.csv'), sep=';')
+
+    #Cleaning of the data - rename columns
+    tourist_info = tourist_info.rename(columns={'SoortRijksmonument': 'Type_of_national_monument', 'RegioS': 'Municipalitycode', 'Rijksmonumenten_1': 'Number_of_national_monuments'})
+
+    #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
+    db_tables = {'tourist_info':tourist_info}
+
+    drop_and_create_table('tourist_info',tourist_info)
+    add_DataFrame_to_DB('tourist_info',tourist_info)
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Done')
+
+# A Function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
+# © Robin Kratschmayr
 def initialize_database():
     #start connection with database
     with open ('db_login.txt', 'r') as myfile:
@@ -84,31 +175,10 @@ def initialize_database():
 
     #specifiy tables to be created with their name and create them with the correct datatypes for postgres.
     db_tables = {'funda':funda_cleaned,'demographic_info':demographic_info_db,'housing_info':housing_info_db,'municipality_names':municipality_names_db,'district_names':district_names_db,'Neighborhood_names':buurt_names_db,'zipcodes':postcodes_db}
-    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
     
     for k,v in db_tables.items():
-        command = "DROP TABLE IF EXISTS {} CASCADE;".format(k)
-        print(command)
-        cur.execute(command)
-        conn.commit()
-        cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in v.dtypes.items()])
-        command = "CREATE TABLE IF NOT EXISTS {} ({});".format(k, cols)
-        cur.execute(command)
-        print(command)
-        conn.commit()
-    
-    #fill tables one by one with info:
-    for k,v in db_tables.items():
-        cols = ",".join([str(i) for i in v.columns.tolist()])
-        for idx,row in v.iterrows():
-            row = list(row)
-            for idx, element in enumerate(row):
-                cleaned = element if type(element) != str else element.replace("'","")
-                row[idx] = cleaned
-            sql = "INSERT INTO {} ({}) VALUES {}".format(str(k),cols,tuple(row))
-            cur.execute(sql)
-            conn.commit()
-        print("Table {} succesfully filled with data".format(str(k)))
+        drop_and_create_table(k,v)
+        add_DataFrame_to_DB(k,v)
 
     #specifiy the Keys:
     key_commands = [
@@ -140,6 +210,10 @@ def initialize_database():
 
     return print('Database successfully initialized')
 
+#########################################THE ASSIGNMENT MINIMUM REQUIREMENTS START HERE#######################################
+
+#This function adds more data to the funda table.
+# © Robin Kratschmayr
 def add_funda_data():
     csv_path = input("Enter the path to the funda csv file you want to add:")
     #start connection with database
@@ -163,16 +237,7 @@ def add_funda_data():
     funda_cleaned['sellingTime'] = pd.to_datetime(funda_cleaned['sellingDate']) - pd.to_datetime(funda_cleaned['publicationDate'])
     funda_cleaned['sellingTime'] = funda_cleaned['sellingTime'].apply(lambda x: int(x.days))
     
-    cols = ",".join([str(i) for i in funda_cleaned.columns.tolist()])
-    for idx,row in funda_cleaned.iterrows():
-        row = list(row)
-        for idx, element in enumerate(row):
-            cleaned = element if type(element) != str else element.replace("'","")
-            row[idx] = cleaned
-        sql = "INSERT INTO funda ({}) VALUES {}".format(cols,tuple(row))
-        cur.execute(sql)
-        conn.commit()
-    print("Data succesfully added to the funda table")
+    add_DataFrame_to_DB('funda',funda_cleaned)
 
     #Make changes to db persistent
     conn.commit()
@@ -182,54 +247,10 @@ def add_funda_data():
     conn.close()
     return print('Funda Data succesfully added')
 
-<<<<<<< HEAD
-=======
 
-def correlation_housing_data_sellingprice_sellingtime():
-    #start connection with database
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-    
-    #Create dataframe to select columns of housing_data
-    housinginfo_sellingpricetime_table = "SELECT sellingPrice, fullDescription, houseType, categoryObject, yearOfBuilding, garden, parcelSurface, numberRooms, numberBathrooms, energylabelClass, surface, sellingtime FROM funda;"
-    housinginfo_sellingpricetime = sqlio.read_sql_query(housinginfo_sellingpricetime_table, conn)
-    
-    #Look for correlations between columns housing_data and sellingprice and sellingtime
-    print(housinginfo_sellingpricetime.corr(method ='pearson')) 
-    
-    '''' 
-    Conclusions with regard to sellingprice: 1)garden+sellingprice=-0,258484 2)parcelSurface+sellingprice=0.076516 3)numberrooms+sellingprice=0.100043 
-    4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
-    
-    Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
-    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849'''
-    
-    return print('Analysis succesfully done')
-
->>>>>>> safetycommit
-def test():
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-
-    executing_script = "SELECT * FROM (SELECT municipalityCode, zipcode FROM funda NATURAL LEFT JOIN zipcodes as funda_zip limit 1000) AS foo NATURAL LEFT JOIN demographic_info;"
-    avg_asking_price_popdens = sqlio.read_sql_query(executing_script, conn)
-    print(avg_asking_price_popdens)
-
-
-    #Make changes to db persistent
-    conn.commit()
-
-    #End connection
-    cur.close()
-    conn.close()
-
-    return DF
-
+############################# THE FOLLOWING SECTION HOLDS THE REQUIRED QUERYS ############################
 #Query 1
+# © Felicia Betten, Baris Orman, Emmanuel Owusu Annim, Robin Kratschmayr
 def query_1():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -265,6 +286,7 @@ def query_1():
     return print('Done')
 
 #Query 2
+# © Robin Kratschmayr
 def query_2():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -293,6 +315,7 @@ def query_2():
     return print('Done')
 
 #Query 3
+# © Felicia Betten
 def query_3():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -316,6 +339,7 @@ def query_3():
     return print('Done')
 
 #Query 4
+# © Robin Kratschmayr
 def query_4():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -365,6 +389,7 @@ def query_4():
     return print('Done')
 
 #Query 5
+# © Felicia Betten
 def query_5():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -395,9 +420,9 @@ def query_5():
     conn.close()
 
     return print('Done')
-query_5()
 
 #Query 6
+# © Baris Orman
 def query_6():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -416,6 +441,7 @@ def query_6():
     return print('Done')
 
 #Query 7
+# © Emmanuel Owusu Annim
 def query_7():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -432,64 +458,8 @@ def query_7():
 
     return print('Done')
 
-#Query_8
-def query_8():
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-
-
-    #Make changes to db persistent
-    conn.commit()
-
-    #End connection
-    cur.close()
-    conn.close()
-
-    return print('Done')
-
-def correlation_analysis_nlp():
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-
-    SQL = "Select * FROM funda_nlp_analysis NATURAL JOIN funda"
-    NLP_Analysis = sqlio.read_sql_query(SQL, conn)    
-    correlations = NLP_Analysis[['sellingprice','sellingtime','descriptionlength','noun','adj','verb','adv','rel_noun','rel_adj','rel_verb','rel_adv','emails','urls','numbers','currency']].corr()
-    print(correlations)
-    most_used_word = NLP_Analysis.groupby(['lexeme_1']).count().sort_values('id',ascending=False)['id']
-    print(most_used_word.head(50))
-
-    #End connection
-    cur.close()
-    conn.close()
-
-
-    return print('Done')
-
-#
-def write_own_sql_query():
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-
-    SQL = input('Write your SQL Query here: ')
-    try: 
-        Output = sqlio.read_sql_query(SQL, conn)
-    except Exception as e:
-        print(e)
-    print(Output)
-
-    #End connection
-    cur.close()
-    conn.close()
-
-
-    return print('Output printed')
-
+# A function that creates the Table in the DB with the aggregated municipality info
+# © Robin Kratschmayr
 def create_aggregated_municipality_info_table():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -525,35 +495,10 @@ def create_aggregated_municipality_info_table():
     avg_asking_price_mean['rel_diff'] = avg_asking_price_mean.apply(lambda x: rel_difference(x), axis= 1)
     avg_asking_price_mean['abs_diff'] = avg_asking_price_mean.apply(lambda x: abs_difference(x), axis= 1)
     avg_asking_price_mean = avg_asking_price_mean.drop(columns='Index')
-
-    db_tables = {'aggregated_municipality_info':avg_asking_price_mean}
-    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
-    
-    for k,v in db_tables.items():
-        command = "DROP TABLE IF EXISTS {} CASCADE;".format(k)
-        print(command)
-        cur.execute(command)
-        conn.commit()
-        cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in v.dtypes.items()])
-        command = "CREATE TABLE IF NOT EXISTS {} ({});".format(k, cols)
-        cur.execute(command)
-        print(command)
-        conn.commit()
-    
-    #fill tables one by one with info:
-    for k,v in db_tables.items():
-        cols = ",".join([str(i) for i in v.columns.tolist()])
-        for idx,row in v.iterrows():
-            row = list(row)
-            for idx, element in enumerate(row):
-                cleaned = element if type(element) != str else element.replace("'","")
-                row[idx] = cleaned
-            sql = "INSERT INTO {} ({}) VALUES {}".format(str(k),cols,tuple(row))
-            cur.execute(sql)
-            conn.commit()
-        print("Table {} succesfully filled with data".format(str(k)))
-
-    
+  
+    #Save it to the Database
+    drop_and_create_table('aggregated_municipality_info',avg_asking_price_mean)
+    add_DataFrame_to_DB('aggregated_municipality_info',avg_asking_price_mean)
 
     #End connection
     cur.close()
@@ -562,6 +507,10 @@ def create_aggregated_municipality_info_table():
     return print('Done')
 
 
+############################################ CORRELATION Analysis #############################################
+#Function that checks for correlations inside the funda Data
+# © Felicia Betten
+def correlation_housing_data_sellingprice_sellingtime():
     #start connection with database
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -582,81 +531,33 @@ def create_aggregated_municipality_info_table():
     Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
     4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849'''
     
-    return print('Done')
-
-def correlation_housing_data_sellingprice_sellingtime():
-    #start connection with database
-    with open ('db_login.txt', 'r') as myfile:
-        data = myfile.read()
-    conn = psycopg2.connect(data)
-    cur = conn.cursor()
-    
-    #Create dataframe to select columns of housing_data
-    housinginfo_sellingpricetime_table = "SELECT sellingPrice, fullDescription, houseType, categoryObject, yearOfBuilding, garden, parcelSurface, numberRooms, numberBathrooms, energylabelClass, surface, sellingtime FROM funda;"
-    housinginfo_sellingpricetime = sqlio.read_sql_query(housinginfo_sellingpricetime_table, conn)
-    
-    #Look for correlations between columns housing_data and sellingprice and sellingtime
-    print(housinginfo_sellingpricetime.corr(method ='pearson')) 
-    
-    '''' 
-    Conclusions with regard to sellingprice: 1)garden+sellingprice=-0,258484 2)parcelSurface+sellingprice=0.076516 3)numberrooms+sellingprice=0.100043 
-    4)numberbathrooms+sellingprice=0.069725 5)surface+sellingprice=0.580748 6)sellingtime+sellingprice=0.145279
-    
-    Conclusion with reagrd to sellingtime: 1)garden+sellingtime=0.145279 2)garden+sellingtime=-0.085790 3)parcelsurface+sellingtime=0.002927 
-    4)numberrooms+sellingtime= 0.136939 5)numberbathrooms+sellingtime=-0.073602 6)surface+sellingtime=0.153849
-    '''
-    
     return print('Analysis succesfully done')
 
-def add_tourist_info_to_database():
-    #Start connection with database
+# A Function that checks for correlations with the NLP Analysis results
+# © Robin Kratschmayr
+def correlation_analysis_nlp():
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
-    tourist_info = pd.read_csv(os.path.join(root, 'Input_data/municipality code and National monuments 2018.csv', sep=';') 
+    SQL = "Select * FROM funda_nlp_analysis NATURAL JOIN funda"
+    NLP_Analysis = sqlio.read_sql_query(SQL, conn)    
+    correlations = NLP_Analysis[['sellingprice','sellingtime','descriptionlength','noun','adj','verb','adv','rel_noun','rel_adj','rel_verb','rel_adv','emails','urls','numbers','currency']].corr()
+    print(correlations)
+    most_used_word = NLP_Analysis.groupby(['lexeme_1']).count().sort_values('id',ascending=False)['id']
 
-    #Cleaning of the data - rename columns
-    tourist_info = tourist_info.rename(columns={'SoortRijksmonument': 'Type_of_national_monument', 'RegioS': 'Municipalitycode', 'Rijksmonumenten_1': 'Number_of_national_monuments'})
-
-    #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
-    db_tables = {'tourist_info':tourist_info}
-    postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
-    
-    for k,v in db_tables.items():
-        command = "DROP TABLE IF EXISTS {} CASCADE;".format(k)
-        print(command)
-        cur.execute(command)
-        conn.commit()
-        cols = ",".join(["{} {}".format(key, postgresql_dtype_translation.get(str(val))) for key,val in v.dtypes.items()])
-        command = "CREATE TABLE IF NOT EXISTS {} ({});".format(k, cols)
-        cur.execute(command)
-        print(command)
-        conn.commit()
-    
-    #Fill tables one by one with info:
-    for k,v in db_tables.items():
-        cols = ",".join([str(i) for i in v.columns.tolist()])
-        for idx,row in v.iterrows():
-            row = list(row)
-            for idx, element in enumerate(row):
-                cleaned = element if type(element) != str else element.replace("'","")
-                row[idx] = cleaned
-            sql = "INSERT INTO {} ({}) VALUES {}".format(str(k),cols,tuple(row))
-            cur.execute(sql)
-            conn.commit()
-        print("Table {} succesfully filled with data".format(str(k)))
-    
-    #Make changes to db persistent
-    conn.commit()
+    print('################## MOST USED WORDS IN THE DESCRIPTION ####################')
+    print(most_used_word.head(50))
 
     #End connection
     cur.close()
     conn.close()
     return print('Done')
 
-def tourist_info_analysis():
+# A Function that checks for correlations for sellingprice and Time and the tourist info
+# © Felicia Betten
+def correlation_tourist_info_analysis():
     #Start connection with database
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -685,6 +586,29 @@ def tourist_info_analysis():
     conn.close()
     return print('Done')
 
+####################################### ADDITIONAL COOL FUNCTIONS FOR OUR APP ##########################################
+#A function that lets the user write an own sql query and prints the output
+# © Robin Kratschmayr
+def write_own_sql_query():
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+
+    SQL = input('Write your SQL Query here: ')
+    try: 
+        Output = sqlio.read_sql_query(SQL, conn)
+    except Exception as e:
+        print(e)
+    print(Output)
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Output printed')
+
+# A Function that lets the user search for words inside the fullDescription
+# © Felicia Betten
 def text_search():
     #Start connection with database
     with open ('db_login.txt', 'r') as myfile:
@@ -718,6 +642,7 @@ def text_search():
     cur.close()
     conn.close()
     return print('Done')
-    
+
+#This is to directly access inidividual functions from the Terminal
 if __name__ == '__main__':
     globals()[sys.argv[1]]()
