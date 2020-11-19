@@ -10,14 +10,14 @@ import matplotlib.pyplot as plt
 import re
 
 ############################################ DATABASE CREATION FUNCTIONS #############################################
-# a function to identify the Rootpath necessary to load the csv in the initialize database function
+# A function to identify the Rootpath necessary to load the csv in the initialize database function
 # © Robin Kratschmayr
 def splitPath(s):
     f = os.path.basename(s)
     p = s[:-(len(f))-1]
     return f, p
 
-# a function that cleans the funda category items and changes them as string
+# A function that cleans the funda category items and changes them as string
 # © Robin Kratschmayr
 def category_to_list(item):
     item_list = item.split(' ')
@@ -27,7 +27,7 @@ def category_to_list(item):
         cleaned_item_list.append(cleaned_item)
     return str(cleaned_item_list)
 
-# A function that takes a dataframe and a name of a table from the DB into which the Datframe entrys should be inserted to.
+# A function that takes a dataframe and a name of a table from the DB into which the Dataframe entrys should be inserted to.
 # © Robin Kratschmayr
 def add_DataFrame_to_DB(name, DF):
     #start connection with database
@@ -110,7 +110,7 @@ def add_tourist_info_to_database():
     conn.close()
     return print('Done')
 
-# # A Function that cleans python function to add tourist data
+# A Function that cleans python function to add labour data
 # © Emmanuel Owusu Annim
 def add_labour_market_info_to_database():
     #Start connection with database
@@ -711,7 +711,7 @@ def correlation_labour_market():
     conn.close()
     return print('Labour Market Info analysis succesfully done')
 
-# This functions checks the correlation between Number of registered crimes and sellingtime?sellingprice
+# This functions checks the correlation between Number of registered crimes and sellingtime/price
 # © Baris Orman
 def correlation_crime_info():
     #Start connection with database
