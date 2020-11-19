@@ -1,7 +1,8 @@
 from wrapper import query_1, query_2, query_3, query_4, query_5, query_6, query_7, \
 initialize_database, add_funda_data, write_own_sql_query, add_tourist_info_to_database, \
 correlation_housing_data_sellingprice_sellingtime, correlation_analysis_nlp, \
-correlation_tourist_info_analysis, text_search, correlation_demographicinfo_sellingprice_sellingtime
+correlation_tourist_info_analysis, text_search, correlation_demographicinfo_sellingprice_sellingtime, \
+correlation_labour_market, correlation_crime_info, correlation_housing_info_sellingprice_sellingtime
 from NLP_Python import fundaNlpAnalysisFunc
 
 # This is the script to interact with all the functions we created
@@ -20,9 +21,8 @@ while str(userinput)!='stop':
     print('3. Run analysis querys')
     print('4. Run NLP analysis')
     print('5. Show correlations')
-    print('6. Plot some results')
-    print('7. Write your own SQL Query')
-    print('8. Do some text search')
+    print('6. Write your own SQL Query')
+    print('7. Do some text search')
     userinput = input("Please type a number from the menu above or type 'stop' to exit")
     print('####################################################################################################')
 
@@ -35,13 +35,12 @@ while str(userinput)!='stop':
     elif userinput == '3':
         print('Which Query do you want to run?')
         print('1. Average asking Price per month for each of the municipalitys')
-        print('2. Average asking Price per Agegroupcategory')
-        print('3. Average asking Price per month for each of the municipalitys')
+        print('2. Average asking Price per Populationdensitycategory')
+        print('3. Average asking Price sorted by income per citizen')
         print('4. Percentage increase/decrease per gemeente per month')
-        print('5. Average asking Price per month for each of the municipalitys')
-        print('6. Average asking Price per month for each of the municipalitys')
-        print('7. Average asking Price per month for each of the municipalitys')
-        print('8. Average asking Price per month for each of the municipalitys')
+        print('5. Absolute increase/decrease of the median sellingprice per month')
+        print('6. Average asking price per Agegroup')
+        print('7. Average sellingtime per month per municipality')
         other_userinput = input('Type the number here: ')
         print('################## RESULTS #################')
         if other_userinput == '1':
@@ -76,21 +75,19 @@ while str(userinput)!='stop':
         elif other_userinput == '2':
             correlation_tourist_info_analysis()
         elif other_userinput == '3':
-            query_3()
+            correlation_crime_info()
         elif other_userinput == '4':
-            query_4()
+            correlation_labour_market()
         elif other_userinput == '5':
             correlation_analysis_nlp()
         elif other_userinput == '6':
             correlation_demographicinfo_sellingprice_sellingtime()
         elif other_userinput == '7':
-            print('To be done')
+            correlation_housing_info_sellingprice_sellingtime()
         input('Type anything to go back to main menu: ')
     elif userinput == '6':
-        print('6')
-    elif userinput == '7':
         write_own_sql_query()
-    elif userinput == '8':
+    elif userinput == '7':
         text_search()
     elif userinput == 'stop':
         print('Stopped')
