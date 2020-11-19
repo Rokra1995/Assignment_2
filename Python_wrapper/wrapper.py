@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import re
 
 ############################################ DATABASE CREATION FUNCTIONS #############################################
+
 # A function to identify the Rootpath, necessary to load the csv in the initialize database function
 # © Robin Kratschmayr
 def splitPath(s):
@@ -54,17 +55,16 @@ def add_DataFrame_to_DB(name, DF):
     conn.close()
     return print("Table {} successfully filled with data".format(name))
 
-# A function that deletes a DB Table if it already exists and creates it new.
+# A function that deletes a DB Table if it already exists and creates it new
 # © Robin Kratschmayr
 def drop_and_create_table(name, DF):
-     #start connection with database
+    #start connection with database
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
     postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
-    
     command = "DROP TABLE IF EXISTS {} CASCADE;".format(name)
     print(command)
     cur.execute(command)
@@ -80,7 +80,7 @@ def drop_and_create_table(name, DF):
     conn.close()
     return print('Table dropped and created')
 
-# A function that adds the cbs tourist data to the database
+# A function that cleans and adds the cbs tourist data to the database
 # © Felicia Betten
 def add_tourist_info_to_database():
     #Start connection with database
@@ -108,7 +108,7 @@ def add_tourist_info_to_database():
     conn.close()
     return print('Done')
 
-# A Function that cleans the labour data and add it to the database
+# A Function that cleans the labour data and adds it to the database
 # © Emmanuel Owusu Annim
 def add_labour_market_info_to_database():
     #Start connection with database
@@ -136,7 +136,8 @@ def add_labour_market_info_to_database():
     conn.close()
     return print('labour_market_info succesfully added')
 
-# A Function that adds the crime data to the database
+
+# A function that cleans and adds the crime data to the database
 # © Baris Orman
 def add_crime_info_to_database():
     #Start connection with database
@@ -167,7 +168,7 @@ def add_crime_info_to_database():
     conn.close()
     return print('Crime info succesfully added')
 
-# A Function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
+# A function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
 # © Robin Kratschmayr
 def initialize_database():
     #start connection with database
@@ -269,7 +270,7 @@ def initialize_database():
 
 #########################################THE ASSIGNMENT MINIMUM REQUIREMENTS START HERE#######################################
 
-# This function adds more data to the funda table.
+# A function that adds additional data to the funda table
 # © Robin Kratschmayr
 def add_funda_data():
     csv_path = input("Enter the path to the funda csv file you want to add:")
@@ -609,7 +610,7 @@ def create_aggregated_municipality_info_table():
 
 ############################################ CORRELATION Analysis #############################################
 
-# Function that checks for correlations inside the funda Data
+# A function that checks for correlations inside the Funda Data
 # © Felicia Betten
 def correlation_funda_data_sellingprice_sellingtime():
     #start connection with database
@@ -634,7 +635,7 @@ def correlation_funda_data_sellingprice_sellingtime():
     
     return print('Analysis succesfully done')
 
-# A Function that checks for correlations with the NLP Analysis results
+# A function that checks for correlations with the NLP Analysis results
 # © Robin Kratschmayr
 def correlation_analysis_nlp():
     with open ('db_login.txt', 'r') as myfile:
@@ -656,7 +657,7 @@ def correlation_analysis_nlp():
     conn.close()
     return print('Done')
 
-# A Function that checks for correlations with the Labour Market Info
+# A function that checks for correlations with the Labour Market Info
 # © Emmanuel Owusu Annim
 def correlation_labour_market():
     #Start connection with database
@@ -693,7 +694,7 @@ def correlation_labour_market():
     conn.close()
     return print('Labour Market Info analysis succesfully done')
 
-# This functions checks the correlation between Number of registered crimes and sellingtime/price
+# A function that checks for correlations with the Crime Data
 # © Baris Orman
 def correlation_crime_info():
     #Start connection with database
@@ -717,7 +718,7 @@ def correlation_crime_info():
     conn.close()
     return print('Crime info analysis succesfully done')
     
-# A Function that checks for correlations sellingprice and demographic info
+# A function that checks for correlations with the Demographic Info
 # © Emmanuel Owusu Annim   
 def correlation_demographicinfo_sellingprice_sellingtime():
     #start connection with database
@@ -745,7 +746,7 @@ def correlation_demographicinfo_sellingprice_sellingtime():
     '''
     return print('Analysis succesfully done')
 
-# Calculates correlations between sellingprice/time and the housing info
+# A function that checks for correlations with the Housing Info
 # © Robin Kratschmayr
 def correlation_housing_info_sellingprice_sellingtime():
     #start connection with database
@@ -763,7 +764,7 @@ def correlation_housing_info_sellingprice_sellingtime():
     
     return print('Analysis succesfully done')
 
-# A Function that checks for correlations for sellingprice and Time and the tourist info
+# A function that checks for correlations with the Tourist Data
 # © Felicia Betten
 def correlation_tourist_info_analysis():
     #Start connection with database
@@ -815,7 +816,7 @@ def write_own_sql_query():
     conn.close()
     return print('Output printed')
 
-# A Function that lets the user search for words inside the fullDescription
+# A function that lets the user search for words inside the fullDescription
 # © Felicia Betten
 def text_search():
     #Start connection with database
@@ -850,6 +851,6 @@ def text_search():
     conn.close()
     return print('Done')
 
-#This is to directly access inidividual functions from the Terminal
+# This is to directly access inidividual functions from the Terminal
 if __name__ == '__main__':
     globals()[sys.argv[1]]()
