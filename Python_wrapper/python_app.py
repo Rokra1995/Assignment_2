@@ -1,8 +1,7 @@
 from wrapper import query_1, query_2, query_3, query_4, query_5, query_6, query_7, \
-initialize_database, add_funda_data, write_own_sql_query, add_tourist_info_to_database, \
-correlation_housing_data_sellingprice_sellingtime, correlation_analysis_nlp, \
+initialize_database, add_funda_data, write_own_sql_query, add_tourist_info_to_database, correlation_analysis_nlp, \
 correlation_tourist_info_analysis, text_search, correlation_demographicinfo_sellingprice_sellingtime, \
-correlation_labour_market, correlation_crime_info, correlation_housing_info_sellingprice_sellingtime
+correlation_labour_market, correlation_crime_info, correlation_housing_info_sellingprice_sellingtime, correlation_funda_data_sellingprice_sellingtime
 from NLP_Python import fundaNlpAnalysisFunc
 
 # This is the script to interact with all the functions we created
@@ -71,7 +70,7 @@ while str(userinput)!='stop':
         print('7. Correlations between sellingtime/price and hosuing_info')
         other_userinput = input('Type the number here: ')
         if other_userinput == '1':
-            correlation_housing_data_sellingprice_sellingtime()
+            correlation_funda_data_sellingprice_sellingtime()
         elif other_userinput == '2':
             correlation_tourist_info_analysis()
         elif other_userinput == '3':
