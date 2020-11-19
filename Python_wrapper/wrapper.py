@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import re
 
 ############################################ DATABASE CREATION FUNCTIONS #############################################
-# A function to identify the Rootpath necessary to load the csv in the initialize database function
+
+# A function to identify the Rootpath, necessary to load the csv in the initialize database function
 # © Robin Kratschmayr
 def splitPath(s):
     f = os.path.basename(s)
@@ -27,7 +28,7 @@ def category_to_list(item):
         cleaned_item_list.append(cleaned_item)
     return str(cleaned_item_list)
 
-# A function that takes a dataframe and a name of a table from the DB into which the Datframe entrys should be inserted to
+# A function that takes a dataframe and a name of a table from the DB into which the Dataframe entrys should be inserted to.
 # © Robin Kratschmayr
 def add_DataFrame_to_DB(name, DF):
     #start connection with database
@@ -52,7 +53,6 @@ def add_DataFrame_to_DB(name, DF):
     #End connection
     cur.close()
     conn.close()
-
     return print("Table {} successfully filled with data".format(name))
 
 # A function that deletes a DB Table if it already exists and creates it new
@@ -65,7 +65,6 @@ def drop_and_create_table(name, DF):
     cur = conn.cursor()
 
     postgresql_dtype_translation = {'object':'text','int64':'integer','float64':'numeric','datetime64[ns]':'date'}
-    
     command = "DROP TABLE IF EXISTS {} CASCADE;".format(name)
     print(command)
     cur.execute(command)
@@ -79,7 +78,6 @@ def drop_and_create_table(name, DF):
     #End connection
     cur.close()
     conn.close()
-
     return print('Table dropped and created')
 
 # A function that cleans and adds the cbs tourist data to the database
@@ -110,7 +108,7 @@ def add_tourist_info_to_database():
     conn.close()
     return print('Done')
 
-# A function that cleans and adds the labour data to the database
+# A Function that cleans the labour data and adds it to the database
 # © Emmanuel Owusu Annim
 def add_labour_market_info_to_database():
     #Start connection with database
@@ -137,6 +135,7 @@ def add_labour_market_info_to_database():
     cur.close()
     conn.close()
     return print('labour_market_info succesfully added')
+
 
 # A function that cleans and adds the crime data to the database
 # © Baris Orman
@@ -187,7 +186,6 @@ def initialize_database():
     brt_2020 = pd.read_csv(os.path.join(root, 'Input_data/brt2020.csv'), sep=";")
     postcodes = pd.read_csv(os.path.join(root, 'Input_data/pc6-gwb2020.csv'), sep=";")
 
-
     #remove NoneTypes, rename columns to english and drop unnecessary columns
     #also cleaning the category objects to python list types for later usage and calculating the sellingtime
     funda_cleaned = funda.fillna(0).rename(columns={'publicatieDatum':'publicationDate','postcode':'zipcode','koopPrijs':'sellingPrice',\
@@ -218,7 +216,6 @@ def initialize_database():
     cbs_cleaned['DistrictCode'] = cbs_cleaned['NeighborhoodsAndDistricts'].apply(lambda x: str(x) if str(x).startswith('WK') else '-')
     cbs_cleaned['NeighborhoodCode'] = cbs_cleaned['NeighborhoodsAndDistricts'].apply(lambda x: str(x) if str(x).startswith('BU') else '-')
     
-
     demographic_info_db = cbs_cleaned[['MunicipalityCode','DistrictCode','NeighborhoodCode','NumberOfMen','NumberOfWomen','AgeFrom0to15years','AgeFrom15to25years',\
     'AgeFrom25to45years','AgeFrom45to65years','AgeFrom65AndOlder','PopulationDensity']]
     
@@ -269,12 +266,11 @@ def initialize_database():
     #End connection
     cur.close()
     conn.close()
-
     return print('Database successfully initialized')
 
 #########################################THE ASSIGNMENT MINIMUM REQUIREMENTS START HERE#######################################
 
-# A function that adds more data to the funda table
+# A function that adds additional data to the funda table
 # © Robin Kratschmayr
 def add_funda_data():
     csv_path = input("Enter the path to the funda csv file you want to add:")
@@ -303,12 +299,10 @@ def add_funda_data():
 
     #Make changes to db persistent
     conn.commit()
-
     #End connection
     cur.close()
     conn.close()
     return print('Funda Data succesfully added')
-
 
 ############################# THE FOLLOWING SECTION HOLDS THE REQUIRED QUERYS ############################
 # Query 1
@@ -319,7 +313,6 @@ def query_1():
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
-    #executing_script = "SELECT * FROM (SELECT municipalityCode, zipcode FROM funda NATURAL LEFT JOIN zipcodes as funda_zip limit 1000) AS foo NATURAL LEFT JOIN demographic_info;"
     # 1. Average  asking  price  per  month  for  each  of  the municipalities in the Netherlands
     #select needed columns from database and store them in a pandas dataframe
     executing_script = "SELECT sellingPrice, publicationDate, MunicipalityCode, MunicipalityName FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names;"
@@ -343,7 +336,6 @@ def query_1():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 # Query 2
@@ -375,7 +367,6 @@ def query_2():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 # Query 3
@@ -399,7 +390,6 @@ def query_3():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 # Query 4
@@ -449,7 +439,6 @@ def query_4():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 # Query 5
@@ -522,7 +511,6 @@ def query_6():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 # Query 7
@@ -535,26 +523,21 @@ def query_7():
 
     #Average Selling time per month and municipality
     executing_script_Q3 = "SELECT sellingDate, publicationDate, MunicipalityCode, MunicipalityName FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names;"
-    average_selling_time = sqlio.read_sql_query(executing_script_Q3, conn)
-    
+    average_selling_time = sqlio.read_sql_query(executing_script_Q3, conn)   
     average_selling_time['sellingdate'] = pd.to_datetime(average_selling_time['sellingdate'])
-    average_selling_time['publicationdate'] = pd.to_datetime(average_selling_time['publicationdate'])
-    
+    average_selling_time['publicationdate'] = pd.to_datetime(average_selling_time['publicationdate'])   
     average_selling_time['sellingtime'] = (average_selling_time['sellingdate']) - (average_selling_time['publicationdate'])
-    
-    
+       
     average_selling_time['sellingtime'] = average_selling_time.sellingdate - average_selling_time.publicationdate
     average_selling_time['sellingtime'] = average_selling_time['sellingtime'].apply(lambda x: int(x.days))
-      
-    
+         
     ########create column month and year and create columns that will be used to group by
     average_selling_time['month'] = average_selling_time['publicationdate'].apply(lambda x: x.month)
     average_selling_time['year'] = average_selling_time['publicationdate'].apply(lambda x: x.year)
     groups = ['municipalityname', 'year','month']
     
     #group by selected columns. calcualte mean and safe as pandas Dataframe
-    average_selling_time_mean = average_selling_time.groupby(by=groups).mean().reset_index()
-    
+    average_selling_time_mean = average_selling_time.groupby(by=groups).mean().reset_index() 
     print(average_selling_time_mean.head(25))
 
     #Make changes to db persistent
@@ -563,9 +546,9 @@ def query_7():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
+# Query 8
 # © Emmanuel Owusu Annim
 def query_8():
     #Per Municipality
@@ -623,10 +606,10 @@ def create_aggregated_municipality_info_table():
     #End connection
     cur.close()
     conn.close()
-
     return print('Done')
 
 ############################################ CORRELATION Analysis #############################################
+
 # A function that checks for correlations inside the Funda Data
 # © Felicia Betten
 def correlation_funda_data_sellingprice_sellingtime():
@@ -859,8 +842,7 @@ def text_search():
         else:
             print(word_in_description[word_in_description.fulldescription.str.contains(word)])
             counter = input_limit
-    
-    
+  
     #Make changes to db persistent
     conn.commit()
 
