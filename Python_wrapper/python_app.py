@@ -1,7 +1,7 @@
 from wrapper import query_1, query_2, query_3, query_4, query_5, query_6, query_7, \
 initialize_database, add_funda_data, write_own_sql_query, add_tourist_info_to_database, \
 correlation_housing_data_sellingprice_sellingtime, correlation_analysis_nlp, \
-correlation_tourist_info_analysis, text_search
+correlation_tourist_info_analysis, text_search, correlation_demographicinfo_sellingprice_sellingtime
 from NLP_Python import fundaNlpAnalysisFunc
 
 # This is the script to interact with all the functions we created
@@ -58,8 +58,6 @@ while str(userinput)!='stop':
             query_6()
         elif other_userinput == '7':
             query_7()
-        elif other_userinput == '8':
-            query_8()
         input('Type anything to go back to main menu: ')
     elif userinput == '4':
         fundaNlpAnalysisFunc()
@@ -70,6 +68,8 @@ while str(userinput)!='stop':
         print('3. Correlations between sellingtime/price and the crime_data')
         print('4. Correlations between sellingtime/price and the labour_data')
         print('5. Correlations between sellingtime/price and the NLP analysis')
+        print('6. Correlations between sellingtime/price and demographic data')
+        print('7. Correlations between sellingtime/price and hosuing_info')
         other_userinput = input('Type the number here: ')
         if other_userinput == '1':
             correlation_housing_data_sellingprice_sellingtime()
@@ -81,6 +81,10 @@ while str(userinput)!='stop':
             query_4()
         elif other_userinput == '5':
             correlation_analysis_nlp()
+        elif other_userinput == '6':
+            correlation_demographicinfo_sellingprice_sellingtime()
+        elif other_userinput == '7':
+            print('To be done')
         input('Type anything to go back to main menu: ')
     elif userinput == '6':
         print('6')

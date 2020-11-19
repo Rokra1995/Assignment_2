@@ -97,9 +97,6 @@ def add_tourist_info_to_database():
     #Cleaning of the data - rename columns
     tourist_info = tourist_info.rename(columns={'SoortRijksmonument': 'Type_of_national_monument', 'RegioS': 'Municipalitycode', 'Rijksmonumenten_1': 'Number_of_national_monuments'})
 
-    #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
-    db_tables = {'tourist_info':tourist_info}
-
     drop_and_create_table('tourist_info',tourist_info)
     add_DataFrame_to_DB('tourist_info',tourist_info)
     
@@ -110,6 +107,68 @@ def add_tourist_info_to_database():
     cur.close()
     conn.close()
     return print('Done')
+
+# # A Function that cleans python function to add tourist data
+# © Emmanuel Owusu Annim
+def add_labour_market_info_to_database():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    f,root = splitPath(current_path)
+
+    labour_market_info = pd.read_csv(os.path.join(root,'Input_data/Young peoples labour market situation (15 to 27)- region 2018.csv'), sep=';')
+    
+    #Cleaning of the data - rename columns
+    labour_market_info = labour_market_info.rename(columns={'Onderwijsvolgend': 'Educational', 'KenmerkenArbeid': 'Characteristics_Labor', 'Uitkering': 'alimony', 'IngeschrevenUWVWerkbedrijf': 'Registered_UWV_Workcompany',  'RegioS': 'Municipalitycode', 'Perioden': 'Periods', 'Jongeren15Tot27Jaar_1': 'Youth15To27Year_1'})
+
+    drop_and_create_table('labour_market_info',labour_market_info)
+    add_DataFrame_to_DB('labour_market_info',labour_market_info)
+  
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('labour_market_info succesfully added')
+
+#A Function that cleans the data and create all necesarry Tables and specifies the Keys
+# © Baris Orman
+def add_crime_info_to_database():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    f,root = splitPath(current_path)
+
+    crime_info = pd.read_csv(os.path.join(root,"Input_data/Registered crime; type of business, region.csv"), sep=';') 
+
+    #Clean all the nan within the dataframe
+    crime_info = crime_info.fillna('-')
+
+    #Cleaning of the data - rename columns
+    crime_info = crime_info.rename(columns={'SoortMisdrijf': 'Sort_of_crime', 'RegioS': 'Municipalitycode', 'Perioden': 'Periods', 'TotaalGeregistreerdeMisdrijven_1': 'Number_of_registered_crimes', 'GeregistreerdeMisdrijvenRelatief_2': 'Relatively_registered_crimes', 'GeregistreerdeMisdrijvenPer1000Inw_3': 'Registered_crimes_per_1000_inhabitants', 'TotaalOpgehelderdeMisdrijven_4': 'Total_clarified_crimes', 'OpgehelderdeMisdrijvenRelatief_5': 'Relatively_clarified_crimes', 'RegistratiesVanVerdachten_6': 'Registrations_of_suspects'})
+
+    #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
+    db_tables = {'crime_info':crime_info}
+
+    drop_and_create_table('crime_info',crime_info)
+    add_DataFrame_to_DB('crime_info',crime_info)
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Crime info succesfully added')
 
 # A Function that cleans the data and creates all necessary DB Tables and specifies the Keys etc.
 # © Robin Kratschmayr
@@ -428,9 +487,33 @@ def query_6():
         data = myfile.read()
     conn = psycopg2.connect(data)
     cur = conn.cursor()
+    
+    #Select needed columns and store them in a pandas df
+    executing_script = "SELECT * FROM (SELECT municipalityCode, zipcode, numberRooms, numberBathrooms, sellingPrice, sellingTime, parcelSurface, garden FROM funda NATURAL LEFT JOIN zipcodes as funda_zip) AS foo NATURAL LEFT JOIN demographic_info;" 
+    demographictotal = sqlio.read_sql_query(executing_script, conn)
 
+    #Create function to with a if compare to get the biggest agegroup within each municipality
+    def compare(row):
+        biggestagegroup = ''
+        if (row.agefrom0to15years > row.agefrom15to25years) and (row.agefrom0to15years > row.agefrom25to45years) and (row.agefrom0to15years > row.agefrom45to65years) and (row.agefrom0to15years > row.agefrom65andolder):
+            biggestagegroup = "agefrom0to15years"
+        elif (row.agefrom15to25years > row.agefrom0to15years) and (row.agefrom15to25years> row.agefrom25to45years) and (row.agefrom15to25years > row.agefrom45to65years) and (row.agefrom15to25years > row.agefrom65andolder):
+            biggestagegroup = "agefrom15to25years"
+        elif (row.agefrom25to45years > row.agefrom0to15years) and (row.agefrom25to45years > row.agefrom15to25years) and (row.agefrom25to45years > row.agefrom45to65years) and (row.agefrom25to45years > row.agefrom65andolder):
+            biggestagegroup = "agefrom25to45years"
+        elif (row.agefrom45to65years > row.agefrom0to15years) and (row.agefrom45to65years > row.agefrom15to25years) and (row.agefrom45to65years > row.agefrom25to45years) and (row.agefrom45to65years > row.agefrom65andolder):
+            biggestagegroup = "agefrom45to65years"
+        elif (row.agefrom65andolder > row.agefrom0to15years) and (row.agefrom65andolder > row.agefrom15to25years) and (row.agefrom65andolder > row.agefrom25to45years) and (row.agefrom65andolder > row.agefrom45to65years):
+            biggestagegroup = "agefrom65andolder"
+        return (biggestagegroup)
+    
+    demographictotal['biggestagegroup'] = demographictotal.apply(lambda x: compare(x), axis = 1)
 
+    #calculate with the groupby function the the avg sellingtime/sellingprice/parcelsurface/(bath)rooms/gardens per agegroup
 
+    avg_house_info_agegroup = demographictotal[["sellingprice", "sellingtime","parcelsurface","garden","numberrooms","numberbathrooms", "biggestagegroup"]].groupby("biggestagegroup").mean()
+    print(avg_house_info_agegroup)
+    
     #Make changes to db persistent
     conn.commit()
 
@@ -448,6 +531,29 @@ def query_7():
     conn = psycopg2.connect(data)
     cur = conn.cursor()
 
+    #Average Selling time per month and municipality
+    executing_script_Q3 = "SELECT sellingDate, publicationDate, MunicipalityCode, MunicipalityName FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names;"
+    average_selling_time = sqlio.read_sql_query(executing_script_Q3, conn)
+    
+    average_selling_time['sellingdate'] = pd.to_datetime(average_selling_time['sellingdate'])
+    average_selling_time['publicationdate'] = pd.to_datetime(average_selling_time['publicationdate'])
+    
+    average_selling_time['sellingtime'] = (average_selling_time['sellingdate']) - (average_selling_time['publicationdate'])
+    
+    
+    average_selling_time['sellingtime'] = average_selling_time.sellingdate - average_selling_time.publicationdate
+    average_selling_time['sellingtime'] = average_selling_time['sellingtime'].apply(lambda x: int(x.days))
+      
+    
+    ########create column month and year and create columns that will be used to group by
+    average_selling_time['month'] = average_selling_time['publicationdate'].apply(lambda x: x.month)
+    average_selling_time['year'] = average_selling_time['publicationdate'].apply(lambda x: x.year)
+    groups = ['municipalityname', 'year','month']
+    
+    #group by selected columns. calcualte mean and safe as pandas Dataframe
+    average_selling_time_mean = average_selling_time.groupby(by=groups).mean().reset_index()
+    
+    print(average_selling_time_mean.head(25))
 
     #Make changes to db persistent
     conn.commit()
@@ -506,7 +612,6 @@ def create_aggregated_municipality_info_table():
 
     return print('Done')
 
-
 ############################################ CORRELATION Analysis #############################################
 #Function that checks for correlations inside the funda Data
 # © Felicia Betten
@@ -554,6 +659,105 @@ def correlation_analysis_nlp():
     cur.close()
     conn.close()
     return print('Done')
+
+# A Function that checks for correlations with the Labour Market Info
+# © Emmanuel Owusu Annim
+def correlation_labour_market():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, MunicipalityName, sellingtime FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names limit 100;"
+    sellingtime_and_price = sqlio.read_sql_query(sellingtime_and_price_table, conn)
+
+    #Select municipality name, sellingprice and sellingtime
+    
+    #Select municipality name, sellingprice, sellingtime and number of Youth 15 to 27 Years
+    labour_market_info_sellingtime_and_price_table = "SELECT sellingPrice, numberRooms, numberBathrooms, surface, houseType, garden, MunicipalityName, sellingtime, Youth15To27Year_1 FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN labour_market_info;"
+    labour_market_info_sellingtime_and_price = sqlio.read_sql_query(labour_market_info_sellingtime_and_price_table, conn)
+    print(labour_market_info_sellingtime_and_price.groupby(['municipalityname']).head(10))
+    
+    #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
+    print(labour_market_info_sellingtime_and_price.corr(method ='pearson',min_periods=3))
+    
+    '''
+    Conclusions:
+    1) correlation Youth 15 to 27 Years + Sellingprice = 0.008988
+    2) correlation Youth 15 to 27 Years + Sellingtime = -0.168388
+    3) correlation Youth 15 to 27 Years + Surface = -0.026832
+    4) correlation Youth 15 to 27 Years + NumberRooms = -0.083243
+    '''
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Labour Market Info analysis succesfully done')
+
+# This functions checks the correlation between Number of registered crimes and sellingtime?sellingprice
+# © Baris Orman
+def correlation_crime_info():
+    #Start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, MunicipalityName, sellingtime FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names limit 100;"
+    sellingtime_and_price = sqlio.read_sql_query(sellingtime_and_price_table, conn)
+    
+    #Select municipality name, sellingprice, sellingtime and number of national monuments
+    crime_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityName, sellingtime, Number_of_registered_crimes FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN crime_info;"
+    crime_info_sellingtime_and_price = sqlio.read_sql_query(crime_info_sellingtime_and_price_table, conn)
+    
+    #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
+    print(crime_info_sellingtime_and_price.corr(method ='pearson',min_periods=3)) 
+    
+    '''
+    Conclusions: 
+    1) correlation number_of_registered_crimes+sellingprice = 1.0 (Perfect correlation) 
+    2) correlation number_of_registered_crimes+sellingtime = 0.156633 (slightly positive) 
+    '''
+    
+    #Make changes to db persistent
+    conn.commit()
+
+    #End connection
+    cur.close()
+    conn.close()
+    return print('Crime info analysis succesfully done')
+    
+# A Function that checks for correlations sellingprice and demographic info
+# © Emmanuel Owusu Annim   
+def correlation_demographicinfo_sellingprice_sellingtime():
+    #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    #Create dataframe to select columns of housing_data
+    demographicinfo_sellingpricetime_table = "SELECT sellingprice, sellingtime, municipalityCode, municipalityname, PopulationDensity, numberofmen, numberofwomen, agefrom0to15years, agefrom15to25years, agefrom45to65years, agefrom65andolder FROM (SELECT sellingprice, sellingtime, municipalityCode, municipalityname, zipcode FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names) as funda_zip NATURAL LEFT JOIN demographic_info;"
+    demographicinfo_sellingpricetime = sqlio.read_sql_query(demographicinfo_sellingpricetime_table, conn)
+    
+    #Look for correlations between columns housing_data and sellingprice and sellingtime
+    print(demographicinfo_sellingpricetime.corr(method ='pearson'))
+    ''''
+    Conclusions with regard to sellingprice:
+    1)populationdensity + sellingprice = 0.133119
+    2)numberofmen + sellingprice = 0.154734
+    3)numberofwomen + sellingprice = 0.155350
+    4)agefrom0to15years + sellingprice =0.151573
+    5)agefrom15to25years + sellingprice = 0.146177
+    6)agefrom45to65years + sellingprice = 0.151555
+    7)agefrom65andolder + sellingprice = 0.136085
+    
+    '''
+    return print('Analysis succesfully done')
 
 # A Function that checks for correlations for sellingprice and Time and the tourist info
 # © Felicia Betten
