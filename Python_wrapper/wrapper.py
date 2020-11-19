@@ -34,6 +34,7 @@ def add_DataFrame_to_DB(name, DF):
         data = myfile.read()
     conn = psycopg2.connect(data)
     cur = conn.cursor()
+
     #get columns of dataframe
     cols = ",".join([str(i) for i in DF.columns.tolist()])
 
@@ -149,15 +150,13 @@ def add_crime_info_to_database():
     f,root = splitPath(current_path)
 
     crime_info = pd.read_csv(os.path.join(root,"Input_data/Registered crime; type of business, region.csv"), sep=';') 
-
     #Clean all the nan within the dataframe
-    crime_info = crime_info.fillna('-')
+    crime_info = crime_info.fillna(0)
 
     #Cleaning of the data - rename columns
-    crime_info = crime_info.rename(columns={'SoortMisdrijf': 'Sort_of_crime', 'RegioS': 'Municipalitycode', 'Perioden': 'Periods', 'TotaalGeregistreerdeMisdrijven_1': 'Number_of_registered_crimes', 'GeregistreerdeMisdrijvenRelatief_2': 'Relatively_registered_crimes', 'GeregistreerdeMisdrijvenPer1000Inw_3': 'Registered_crimes_per_1000_inhabitants', 'TotaalOpgehelderdeMisdrijven_4': 'Total_clarified_crimes', 'OpgehelderdeMisdrijvenRelatief_5': 'Relatively_clarified_crimes', 'RegistratiesVanVerdachten_6': 'Registrations_of_suspects'})
+    crime_info = crime_info.rename(columns={'SoortMisdrijf': 'Sort_of_crime', 'RegioS': 'MunicipalityCode', 'Perioden': 'Periods', 'TotaalGeregistreerdeMisdrijven_1': 'Number_of_registered_crimes', 'GeregistreerdeMisdrijvenRelatief_2': 'Relatively_registered_crimes', 'GeregistreerdeMisdrijvenPer1000Inw_3': 'Registered_crimes_per_1000_inhabitants', 'TotaalOpgehelderdeMisdrijven_4': 'Total_clarified_crimes', 'OpgehelderdeMisdrijvenRelatief_5': 'Relatively_clarified_crimes', 'RegistratiesVanVerdachten_6': 'Registrations_of_suspects'})
 
     #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
-    db_tables = {'crime_info':crime_info}
 
     drop_and_create_table('crime_info',crime_info)
     add_DataFrame_to_DB('crime_info',crime_info)
@@ -238,6 +237,10 @@ def initialize_database():
     for k,v in db_tables.items():
         drop_and_create_table(k,v)
         add_DataFrame_to_DB(k,v)
+    
+    add_tourist_info_to_database()
+    add_labour_market_info_to_database()
+    add_crime_info_to_database()
 
     #specifiy the Keys:
     key_commands = [
@@ -334,7 +337,6 @@ def query_1():
     print("QUERY 1: AVERAGE ASKING PRICE PER MONTH PER MUNICIPALITY:")
     print(avg_asking_price_mean)
 
-
     #Make changes to db persistent
     conn.commit()
 
@@ -363,6 +365,9 @@ def query_2():
     print("AVERAGE ASKING PRICE PER POPULATIONDENSITY GROUP")
     print(avg_asking_price_popdens_grouped.head(50))
 
+    avg_asking_price_popdens_grouped.plot(kind='bar', rot='25')
+    plt.title('Avergae asking price per Populationdensitygroup')
+    plt.show()
 
     #Make changes to db persistent
     conn.commit()
@@ -433,8 +438,8 @@ def query_4():
     print('RELATIVE DIFFERENCE TO THE PREVIOUS MONTH PER GEMEENTE')
     print(avg_asking_price_mean)
 
-    avg_asking_price_mean[avg_asking_price_mean.municipalityname=='Amsterdam'][['month','sellingprice']].set_index('month').plot()
-    plt.title('Avergae Houseprice per month in Amsterdam for 2018')
+    avg_asking_price_mean[avg_asking_price_mean.municipalityname=='Amsterdam'][['month','rel_diff']].set_index('month').plot(kind='bar')
+    plt.title('Relative Houseprice difference per month in Amsterdam for 2018')
     plt.show()
 
 
@@ -508,9 +513,6 @@ def query_6():
         return (biggestagegroup)
     
     demographictotal['biggestagegroup'] = demographictotal.apply(lambda x: compare(x), axis = 1)
-
-    #calculate with the groupby function the the avg sellingtime/sellingprice/parcelsurface/(bath)rooms/gardens per agegroup
-
     avg_house_info_agegroup = demographictotal[["sellingprice", "sellingtime","parcelsurface","garden","numberrooms","numberbathrooms", "biggestagegroup"]].groupby("biggestagegroup").mean()
     print(avg_house_info_agegroup)
     
@@ -677,7 +679,6 @@ def correlation_labour_market():
     #Select municipality name, sellingprice, sellingtime and number of Youth 15 to 27 Years
     labour_market_info_sellingtime_and_price_table = "SELECT sellingPrice, numberRooms, numberBathrooms, surface, houseType, garden, MunicipalityName, sellingtime, Youth15To27Year_1 FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN labour_market_info;"
     labour_market_info_sellingtime_and_price = sqlio.read_sql_query(labour_market_info_sellingtime_and_price_table, conn)
-    print(labour_market_info_sellingtime_and_price.groupby(['municipalityname']).head(10))
     
     #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
     print(labour_market_info_sellingtime_and_price.corr(method ='pearson',min_periods=3))
@@ -711,17 +712,11 @@ def correlation_crime_info():
     sellingtime_and_price = sqlio.read_sql_query(sellingtime_and_price_table, conn)
     
     #Select municipality name, sellingprice, sellingtime and number of national monuments
-    crime_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityName, sellingtime, Number_of_registered_crimes FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names NATURAL LEFT JOIN crime_info;"
+    crime_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, sellingtime, Number_of_registered_crimes FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN crime_info;"
     crime_info_sellingtime_and_price = sqlio.read_sql_query(crime_info_sellingtime_and_price_table, conn)
     
     #Look for correlations between number of monuments (tourist info) and sellingprice and sellingtime
-    print(crime_info_sellingtime_and_price.corr(method ='pearson',min_periods=3)) 
-    
-    '''
-    Conclusions: 
-    1) correlation number_of_registered_crimes+sellingprice = 1.0 (Perfect correlation) 
-    2) correlation number_of_registered_crimes+sellingtime = 0.156633 (slightly positive) 
-    '''
+    print(crime_info_sellingtime_and_price.corr(method ='pearson')) 
     
     #Make changes to db persistent
     conn.commit()
@@ -745,7 +740,7 @@ def correlation_demographicinfo_sellingprice_sellingtime():
     demographicinfo_sellingpricetime = sqlio.read_sql_query(demographicinfo_sellingpricetime_table, conn)
     
     #Look for correlations between columns housing_data and sellingprice and sellingtime
-    print(demographicinfo_sellingpricetime.corr(method ='pearson'))
+    print(demographicinfo_sellingpricetime.corr(method ='pearson')[['sellingprice','sellingtime']])
     ''''
     Conclusions with regard to sellingprice:
     1)populationdensity + sellingprice = 0.133119
@@ -757,6 +752,24 @@ def correlation_demographicinfo_sellingprice_sellingtime():
     7)agefrom65andolder + sellingprice = 0.136085
     
     '''
+    return print('Analysis succesfully done')
+
+# Calculates correlations between sellingprice/time and the housing info
+# © Robin Kratschmayr
+def correlation_housing_info_sellingprice_sellingtime():
+    #start connection with database
+    with open ('db_login.txt', 'r') as myfile:
+        data = myfile.read()
+    conn = psycopg2.connect(data)
+    cur = conn.cursor()
+    
+    #Create dataframe to select columns of housing_data
+    housing_info_sellingpricetime_table = "SELECT sellingprice, sellingtime, municipalityCode, municipalityname, HousingStock, PercentageInhabited, PercentageUninhabited, OwnerOccupiedHouses, RentalHouses, ConstructionYearBefore2000, ConstructionYearAfter2000, AverageIncomePerCitizen, CoveragePercentage FROM (SELECT sellingprice, sellingtime, municipalityCode, municipalityname, zipcode FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names) as funda_zip NATURAL LEFT JOIN housing_info;"
+    housing_info_sellingpricetime = sqlio.read_sql_query(housing_info_sellingpricetime_table, conn)
+    
+    #Look for correlations between columns housing_data and sellingprice and sellingtime
+    print(housing_info_sellingpricetime.corr(method ='pearson')[['sellingprice','sellingtime']])
+    
     return print('Analysis succesfully done')
 
 # A Function that checks for correlations for sellingprice and Time and the tourist info
