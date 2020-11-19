@@ -7,6 +7,7 @@ import os
 import sys
 import datetime
 import matplotlib.pyplot as plt
+import re
 
 ############################################ DATABASE CREATION FUNCTIONS #############################################
 # a function to identify the Rootpath necessary to load the csv in the initialize database function
@@ -54,7 +55,7 @@ def add_DataFrame_to_DB(name, DF):
 
     return print("Table {} successfully filled with data".format(name))
 
-# A functiion that deletes a DB Table if it already exists and creates it new.
+# A function that deletes a DB Table if it already exists and creates it new.
 # © Robin Kratschmayr
 def drop_and_create_table(name, DF):
      #start connection with database
@@ -81,7 +82,7 @@ def drop_and_create_table(name, DF):
 
     return print('Table dropped and created')
 
-# A function that adds the cbs tourist dta to the database
+# A function that adds the cbs tourist data to the database
 # © Felicia Betten
 def add_tourist_info_to_database():
     #Start connection with database
@@ -149,7 +150,7 @@ def add_crime_info_to_database():
     current_path = os.path.dirname(os.path.abspath(__file__))
     f,root = splitPath(current_path)
 
-    crime_info = pd.read_csv(os.path.join(root,"Input_data/Registered crime; type of business, region.csv"), sep=';') 
+    crime_info = pd.read_csv(os.path.join(root,"Input_data/Registered crime; type of business, region 2018.csv"), sep=';') 
     #Clean all the nan within the dataframe
     crime_info = crime_info.fillna(0)
 
@@ -157,7 +158,6 @@ def add_crime_info_to_database():
     crime_info = crime_info.rename(columns={'SoortMisdrijf': 'Sort_of_crime', 'RegioS': 'MunicipalityCode', 'Perioden': 'Periods', 'TotaalGeregistreerdeMisdrijven_1': 'Number_of_registered_crimes', 'GeregistreerdeMisdrijvenRelatief_2': 'Relatively_registered_crimes', 'GeregistreerdeMisdrijvenPer1000Inw_3': 'Registered_crimes_per_1000_inhabitants', 'TotaalOpgehelderdeMisdrijven_4': 'Total_clarified_crimes', 'OpgehelderdeMisdrijvenRelatief_5': 'Relatively_clarified_crimes', 'RegistratiesVanVerdachten_6': 'Registrations_of_suspects'})
 
     #Specifiy tables to be created with their name and create them with the correct datatypes for postgres.
-
     drop_and_create_table('crime_info',crime_info)
     add_DataFrame_to_DB('crime_info',crime_info)
     
@@ -366,7 +366,7 @@ def query_2():
     print(avg_asking_price_popdens_grouped.head(50))
 
     avg_asking_price_popdens_grouped.plot(kind='bar', rot='25')
-    plt.title('Avergae asking price per Populationdensitygroup')
+    plt.title('Average asking price per Populationdensitygroup')
     plt.show()
 
     #Make changes to db persistent
@@ -566,6 +566,18 @@ def query_7():
 
     return print('Done')
 
+# © Emmanuel Owusu Annim
+def query_8():
+    #Per Municipality
+    executing_script_Q3 = "SELECT sellingDate, sellingPrice, parcelSurface, publicationDate, MunicipalityCode, MunicipalityName FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names;"
+    average_parcelsurface = sqlio.read_sql_query(executing_script_Q3, conn)
+    ########create column month and year and create columns that will be used to group by
+    groups = ['municipalityname']
+    #group by selected columns. calcualte mean and safe as pandas Dataframe
+    average_parcelsurface_mean = average_parcelsurface.groupby(by=groups).mean().reset_index()
+    print(average_parcelsurface_mean.head(25))
+    return print('Done')
+
 # A function that creates the Table in the DB with the aggregated municipality info
 # © Robin Kratschmayr
 def create_aggregated_municipality_info_table():
@@ -617,7 +629,7 @@ def create_aggregated_municipality_info_table():
 ############################################ CORRELATION Analysis #############################################
 #Function that checks for correlations inside the funda Data
 # © Felicia Betten
-def correlation_housing_data_sellingprice_sellingtime():
+def correlation_funda_data_sellingprice_sellingtime():
     #start connection with database
     with open ('db_login.txt', 'r') as myfile:
         data = myfile.read()
@@ -707,9 +719,6 @@ def correlation_crime_info():
         data = myfile.read()
     conn = psycopg2.connect(data)
     cur = conn.cursor()
-    
-    sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, MunicipalityName, sellingtime FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN municipality_names limit 100;"
-    sellingtime_and_price = sqlio.read_sql_query(sellingtime_and_price_table, conn)
     
     #Select municipality name, sellingprice, sellingtime and number of national monuments
     crime_info_sellingtime_and_price_table = "SELECT sellingPrice, MunicipalityCode, sellingtime, Number_of_registered_crimes FROM funda NATURAL LEFT JOIN zipcodes NATURAL LEFT JOIN crime_info;"
